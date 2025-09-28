@@ -6,20 +6,19 @@ WORKDIR /app
 
 # Copy the solution file to the root of the WORKDIR
 # IMPORTANT: Make sure the .sln filename matches exactly (case-sensitive)
-COPY Chrika.Api.sln .
+COPY chrika.api.sln .
 
 # Copy the actual project directory (chrika.api - lowercase) to the WORKDIR
-# This assumes your project folder is named 'chrika.api' (lowercase) and is directly under the Dockerfile's location
-COPY chrika.api/ chrika.api/
+COPY chrika.api/chrika.api/
 
 # Restore dependencies for the solution
 RUN dotnet restore
 
 # Build the application
-RUN dotnet build chrika.api/Chrika.Api.csproj -c Release --no-restore
+RUN dotnet build chrika.api/chrika.Api.csproj -c Release --no-restore
 
 # Publish the application
-RUN dotnet publish chrika.api/Chrika.Api.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish chrika.api/chrika.Api.csproj -c Release -o /app/publish --no-restore
 
 # Use the official .NET 8 runtime image for running
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
@@ -38,4 +37,4 @@ ENV ASPNETCORE_URLS=http://0.0.0.0:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Run the application
-ENTRYPOINT ["dotnet", "Chrika.Api.dll"]
+ENTRYPOINT ["dotnet", "chrika.Api.dll"]
