@@ -14,12 +14,12 @@ COPY chrika.api/ chrika.api/
 RUN dotnet restore
 
 # Build the application
-# Correct the casing for the .csproj file name
-RUN dotnet build chrika.api/Chrika.Api.csproj -c Release --no-restore
+# Correct the casing for the .csproj file name to match the actual filename
+RUN dotnet build chrika.api/chrika.api.csproj -c Release --no-restore
 
 # Publish the application
-# Correct the casing for the .csproj file name
-RUN dotnet publish chrika.api/Chrika.Api.csproj -c Release -o /app/publish --no-restore
+# Correct the casing for the .csproj file name to match the actual filename
+RUN dotnet publish chrika.api/chrika.api.csproj -c Release -o /app/publish --no-restore
 
 # Use the official .NET 8 runtime image for running
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
@@ -38,4 +38,4 @@ ENV ASPNETCORE_URLS=http://0.0.0.0:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Run the application
-ENTRYPOINT ["dotnet", "Chrika.Api.dll"]
+ENTRYPOINT ["dotnet", "chrika.Api.dll"]
