@@ -14,11 +14,9 @@ COPY chrika.api/ chrika.api/
 RUN dotnet restore
 
 # Build the application
-# Correct the casing for the .csproj file name to match the actual filename
 RUN dotnet build chrika.api/chrika.api.csproj -c Release --no-restore
 
 # Publish the application
-# Correct the casing for the .csproj file name to match the actual filename
 RUN dotnet publish chrika.api/chrika.api.csproj -c Release -o /app/publish --no-restore
 
 # Use the official .NET 8 runtime image for running
@@ -30,12 +28,12 @@ WORKDIR /app
 # Copy the published application from the build stage
 COPY --from=build /app/publish .
 
-# Expose the port that the app runs on
+# Expose the port that the app runs on (Railway will map its own port to this)
 EXPOSE 80
 
 # Set environment variables
-ENV ASPNETCORE_URLS=http://0.0.0.0:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Run the application
-ENTRYPOINT ["dotnet", "chrika.Api.dll"]
+# Correct the casing for the .dll file name
+ENTRYPOINT ["dotnet", "Chrika.Api.dll"]
