@@ -1,18 +1,19 @@
-// using statements to import necessary libraries
+﻿// using statements to import necessary libraries
 using Chrika.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Chrika.Api.Services; // Assuming your services are in this namespace
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Section 1: Configure Services ---
-
-// 1. Add DbContext for Entity Framework
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-);
 
+// --- گۆڕانکارییەکە لێرەدایە ---
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
+        // زیادکردنی ئەم هێڵە کێشەکە چارەسەر دەکات
+        mySqlOptions => mySqlOptions.EnableStringComparisonTranslations()
+    )
+);
 // 2. Add Controllers
 builder.Services.AddControllers();
 
