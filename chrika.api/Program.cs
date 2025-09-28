@@ -25,6 +25,8 @@ builder.Services.AddControllers();
 // 3. Register Custom Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPostService, PostService>();
+
 
 // 4. Add Authentication with JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
