@@ -7,23 +7,18 @@ WORKDIR /app
 # Copy the solution file to the root of the WORKDIR
 COPY Chrika.Api.sln .
 
-# Create the source directory structure inside the container
-RUN mkdir -p src/Chrika.Api
+# Copy the Chrika.Api project directory to the WORKDIR
+# This assumes your Chrika.Api project folder is directly under the directory where Dockerfile resides
+COPY Chrika.Api/ Chrika.Api/
 
-# Copy the project file to its correct location inside the container
-COPY src/Chrika.Api/Chrika.Api.csproj src/Chrika.Api/
-
-# Restore dependencies
+# Restore dependencies for the solution
 RUN dotnet restore
 
-# Copy the rest of the source code to the correct location
-COPY src/Chrika.Api/ src/Chrika.Api/
-
 # Build the application
-RUN dotnet build src/Chrika.Api/Chrika.Api.csproj -c Release --no-restore
+RUN dotnet build Chrika.Api/Chrika.Api.csproj -c Release --no-restore
 
 # Publish the application
-RUN dotnet publish src/Chrika.Api/Chrika.Api.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish Chrika.Api/Chrika.Api.csproj -c Release -o /app/publish --no-restore
 
 # Use the official .NET 8 runtime image for running
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
@@ -38,8 +33,8 @@ COPY --from=build /app/publish .
 EXPOSE 5000
 
 # Set environment variables
-# ENV ASPNETCORE_URLS=http://0.0.0.0:5000
+ENV ASPNETCORE_URLS=http://0.0.0.0:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Run the application
-ENTRYPOINT ["dotnet", "chrika.Api.dll"]
+ENTRYPOINT ["dotnet", "Chrika.Api.dll"]
