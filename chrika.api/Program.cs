@@ -1,16 +1,32 @@
-﻿// using statements to import necessary libraries
+﻿// using statements
 using Chrika.Api.Data;
-using Chrika.Api.Services; // Assuming your services are in this namespace
+using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models; // <-- زیادکرا بۆ Swagger
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// --- Section 1: Configure Services ---
 
-// --- START: زیادکردنی ئەم بەشە بۆ ناساندنی JWT ---
+// 1. Add DbContext for Entity Framework
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
+        mySqlOptions => mySqlOptions.EnableStringComparisonTranslations()
+    )
+);
+
+// 2. Add Controllers
+builder.Services.AddControllers();
+
+// 3. Register Custom Services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+// 4. Add Authentication with JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -24,25 +40,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"]
         };
     });
-// --- گۆڕانکارییەکە لێرەدایە ---
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-        // زیادکردنی ئەم هێڵە کێشەکە چارەسەر دەکات
-        mySqlOptions => mySqlOptions.EnableStringComparisonTranslations()
-    )
-);
-// 2. Add Controllers
-builder.Services.AddControllers();
-builder.Services.AddScoped<ITokenService, TokenService>();
 
-// 3. Register your custom services (like UserService)
-builder.Services.AddScoped<IUserService, UserService>();
-
-// 4. Add Swagger for API documentation
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// 5. Add CORS to allow requests from your Blazor app
+// 5. Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -54,8 +53,42 @@ builder.Services.AddCors(options =>
         });
 });
 
+// 6. Add Swagger with JWT Support
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
+
+
+// --- Section 2: Build the Application ---
 var app = builder.Build();
-if (app.Environment.IsDevelopment())
+
+
+// --- Section 3: Configure the HTTP Request Pipeline (Middleware) ---
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -66,10 +99,12 @@ app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); // We will add this later for login
-app.UseAuthorization();
-app.UseAuthentication(); // یەکەم: دڵنیادەبێتەوە کە بەکارهێنەر کێیە (پشکنینی تۆکن)
-app.UseAuthorization();  // دووەم: دڵنیادەبێتەوە کە ئایا ئەو بەکارهێنەرە بۆی هەیە ئەو کارە بکات
+// گرنگ: ڕیزبەندی ئەم دووانە نابێت بگۆڕدرێت
+app.UseAuthentication(); // یەکەم: پشکنینی تۆکن
+app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
 
 app.MapControllers();
+
+
+// --- Section 4: Run the Application ---
 app.Run();
