@@ -1,5 +1,4 @@
-using Chrika.Api.DTOs;
-using Chrika.Api.Models;
+﻿using Chrika.Api.DTOs;
 
 namespace Chrika.Api.Services
 {
@@ -16,7 +15,9 @@ namespace Chrika.Api.Services
         Task<bool> UserExistsAsync(int id);
         Task<bool> UsernameExistsAsync(string username);
         Task<bool> EmailExistsAsync(string email);
-        Task<UserDto?> AuthenticateUserAsync(LoginDto loginDto);
+
+        // === گۆڕانکاری لێرەدایە ===
+        // ئێستا لەبری UserDto، LoginResponseDto دەگەڕێنێتەوە کە تۆکنەکەی تێدایە
+        Task<LoginResponseDto?> AuthenticateUserAsync(LoginDto loginDto);
     }
 }
-

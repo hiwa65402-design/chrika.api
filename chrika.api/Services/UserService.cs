@@ -1,25 +1,48 @@
-﻿using Chrika.Api.Data; // <-- ئەمە زیاد بکە بۆ کارکردن لەگەڵ داتابەیس
+﻿using Chrika.Api.Data;
 using Chrika.Api.DTOs;
 using Chrika.Api.Models;
-using Microsoft.EntityFrameworkCore; // <-- ئەمەش زیاد بکە
+using Microsoft.EntityFrameworkCore;
 
 namespace Chrika.Api.Services
 {
     public class UserService : IUserService
     {
-        // --- بەشی یەکەم: گۆڕینی لیستی کاتی بە داتابەیسی ڕاستەقینە ---
         private readonly ApplicationDbContext _context;
+        private readonly ITokenService _tokenService; // زیادکرا بۆ دروستکردنی تۆکن
 
-        public UserService(ApplicationDbContext context)
+        // Constructor نوێکرایەوە بۆ وەرگرتنی ITokenService
+        public UserService(ApplicationDbContext context, ITokenService tokenService)
         {
             _context = context;
+            _tokenService = tokenService;
         }
 
-        // --- بەشی دووەم: نوێکردنەوەی میتۆدەکان بۆ کارکردن لەگەڵ داتابەیس ---
+        // === گۆڕانکاری سەرەکی لێرەدایە ===
+        public async Task<LoginResponseDto?> AuthenticateUserAsync(LoginDto loginDto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                (u.Username.Equals(loginDto.UsernameOrEmail, StringComparison.OrdinalIgnoreCase) ||
+                 u.Email.Equals(loginDto.UsernameOrEmail, StringComparison.OrdinalIgnoreCase)) &&
+                u.IsActive);
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+            {
+                return null; // Authentication failed
+            }
+
+            // دروستکردنی تۆکن بە بەکارهێنانی TokenService
+            var token = _tokenService.CreateToken(user);
+
+            // گەڕاندنەوەی وەڵامێک کە تۆکنەکەی تێدایە
+            return new LoginResponseDto
+            {
+                Username = user.Username,
+                Token = token
+            };
+        }
 
         public async Task<UserDto> CreateUserAsync(CreateUserDto createUserDto)
         {
-            // گۆڕینی هاشکردن بۆ BCrypt
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(createUserDto.Password);
 
             var user = new User
@@ -28,7 +51,7 @@ namespace Chrika.Api.Services
                 Email = createUserDto.Email,
                 FirstName = createUserDto.FirstName,
                 LastName = createUserDto.LastName,
-                PasswordHash = passwordHash, // بەکارهێنانی هاشە نوێیەکە
+                PasswordHash = passwordHash,
                 Bio = createUserDto.Bio,
                 DateOfBirth = createUserDto.DateOfBirth,
                 CreatedAt = DateTime.UtcNow,
@@ -37,47 +60,14 @@ namespace Chrika.Api.Services
                 IsVerified = false
             };
 
-            // زیادکردن بۆ داتابەیسی ڕاستەقینە
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
             return MapToDto(user);
         }
 
-        public async Task<UserDto?> AuthenticateUserAsync(LoginDto loginDto)
-        {
-            // گەڕان لەناو داتابەیسی ڕاستەقینە
-            var user = await _context.Users.FirstOrDefaultAsync(u =>
-                (u.Username.Equals(loginDto.UsernameOrEmail, StringComparison.OrdinalIgnoreCase) ||
-                 u.Email.Equals(loginDto.UsernameOrEmail, StringComparison.OrdinalIgnoreCase)) &&
-                u.IsActive);
-
-            // بەکارهێنانی BCrypt بۆ بەراوردکردنی پاسۆرد
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
-            {
-                return null; // ئەگەر بەکارهێنەر نەبوو یان پاسۆرد هەڵە بوو
-            }
-
-            return MapToDto(user);
-        }
-
-        public async Task<bool> UsernameExistsAsync(string username)
-        {
-            // گەڕان لەناو داتابەیسی ڕاستەقینە
-            return await _context.Users.AnyAsync(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase) && u.IsActive);
-        }
-
-        public async Task<bool> EmailExistsAsync(string email)
-        {
-            // گەڕان لەناو داتابەیسی ڕاستەقینە
-            return await _context.Users.AnyAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase) && u.IsActive);
-        }
-
-        // ... میتۆدەکانی تریش دەبێت بە هەمان شێوە کار لەگەڵ _context بکەن ...
-        // من بۆ کورتکردنەوە تەنها گرنگەکانم داناوە، ئەوانی تریش بە ئاسانی دەگۆڕدرێن
-
-        #region (میتۆدەکانی تر - وەک خۆیان با بمێننەوە بەڵام دەبێت بگۆڕدرێن بۆ _context)
-
+        // ... باقی میتۆدەکان وەک خۆیان بمێننەوە (کۆدی پێشووت بێکێشە بوو) ...
+        #region Other Methods
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _context.Users.Where(u => u.IsActive).ToListAsync();
@@ -107,10 +97,12 @@ namespace Chrika.Api.Services
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.IsActive);
             if (user == null) return null;
 
-            // ... (لۆجیکی نوێکردنەوە وەک خۆی)
             user.FirstName = updateUserDto.FirstName ?? user.FirstName;
             user.LastName = updateUserDto.LastName ?? user.LastName;
-            // ...
+            user.Bio = updateUserDto.Bio ?? user.Bio;
+            user.ProfilePicture = updateUserDto.ProfilePicture ?? user.ProfilePicture;
+            if (updateUserDto.DateOfBirth.HasValue) user.DateOfBirth = updateUserDto.DateOfBirth.Value;
+
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return MapToDto(user);
@@ -143,7 +135,10 @@ namespace Chrika.Api.Services
                 Username = user.Username,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                // ...
+                ProfilePicture = user.ProfilePicture,
+                Bio = user.Bio,
+                CreatedAt = user.CreatedAt,
+                IsVerified = user.IsVerified,
                 FollowersCount = user.Followers.Count,
                 FollowingCount = user.Followings.Count,
                 PostsCount = user.Posts.Count
@@ -155,9 +150,16 @@ namespace Chrika.Api.Services
             return await _context.Users.AnyAsync(u => u.Id == id && u.IsActive);
         }
 
-        #endregion
+        public async Task<bool> UsernameExistsAsync(string username)
+        {
+            return await _context.Users.AnyAsync(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase) && u.IsActive);
+        }
 
-        // ئەم میتۆدە وەک خۆی دەمێنێتەوە و زۆر باشە
+        public async Task<bool> EmailExistsAsync(string email)
+        {
+            return await _context.Users.AnyAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase) && u.IsActive);
+        }
+
         private static UserDto MapToDto(User user)
         {
             return new UserDto
@@ -174,5 +176,6 @@ namespace Chrika.Api.Services
                 IsVerified = user.IsVerified
             };
         }
+        #endregion
     }
 }

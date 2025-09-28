@@ -68,6 +68,11 @@ namespace Chrika.Api.DTOs
         [Required]
         public string Password { get; set; } = string.Empty;
     }
+    public class LoginResponseDto
+    {
+        public string? Username { get; set; }
+        public string? Token { get; set; }
+    }
 
     public class UserProfileDto
     {
