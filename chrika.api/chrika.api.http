@@ -1,0 +1,6 @@
+@chrika.api_HostAddress = http://localhost:5066
+
+GET {{chrika.api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
