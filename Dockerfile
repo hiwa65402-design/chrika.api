@@ -35,5 +35,5 @@ EXPOSE 80
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Run the application
-# Correct the casing for the .dll file name
-ENTRYPOINT ["dotnet", "Chrika.Api.dll"]
+# CORRECTED: The .dll file name should match the project name (all lowercase)
+ENTRYPOINT ["dotnet", "chrika.api.dll"]
