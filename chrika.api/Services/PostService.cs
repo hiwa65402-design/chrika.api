@@ -64,6 +64,33 @@ namespace Chrika.Api.Services
                 CommentsCount = post.Comments?.Count ?? 0
             };
         }
+        public async Task<bool> DeletePostAsync(int postId, int userId)
+        {
+            // 1. پۆستەکە لە داتابەیس بدۆزەرەوە
+            var post = await _context.Posts.FindAsync(postId);
+
+            // 2. ئەگەر پۆستەکە بوونی نەبوو، false بگەڕێنەرەوە
+            if (post == null)
+            {
+                return false;
+            }
+
+            // 3. === گرنگترین بەش: پشکنینی خاوەندارێتی ===
+            //    ئایا ئەو بەکارهێنەرەی داواکارییەکەی ناردووە (userId)
+            //    هەمان خاوەنی پۆستەکەیە (post.UserId)؟
+            if (post.UserId != userId)
+            {
+                // ئەگەر خاوەنی نەبوو، ڕێگەی پێنادەین بیسڕێتەوە
+                // لێرەدا false دەگەڕێنینەوە، لە کۆنترۆڵەر وەڵامی 403 Forbidden دەنێرین
+                return false;
+            }
+
+            // 4. ئەگەر هەموو شتێک ڕاست بوو، پۆستەکە بسڕەوە
+            _context.Posts.Remove(post);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
 
         // بۆ تەواوکردنی ئینتەرفەیسەکە، با ئەمانەش بە بەتاڵی دابنێین و دواتر پڕیان دەکەینەوە
         public Task<PostDto?> GetPostByIdAsync(int id)
@@ -74,9 +101,6 @@ namespace Chrika.Api.Services
         {
             throw new System.NotImplementedException();
         }
-        public Task<bool> DeletePostAsync(int postId, int userId)
-        {
-            throw new System.NotImplementedException();
-        }
+        
     }
 }

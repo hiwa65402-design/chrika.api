@@ -40,5 +40,31 @@ public class PostsController : ControllerBase
 
         // return CreatedAtAction(nameof(GetPost), new { id = createdPost.Id }, createdPost);
         return Ok(createdPost); // بۆ سادەیی
+
+
+
+    }
+    public async Task<IActionResult> DeletePost(int id)
+    {
+        // وەرگرتنی IDی بەکارهێنەر لە تۆکنەکە
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var success = await _postService.DeletePostAsync(id, int.Parse(userId));
+
+        if (!success)
+        {
+            // لێرەدا دوو حاڵەت هەیە:
+            // 1. پۆستەکە هەر بوونی نییە (کە دەبێت 404 Not Found بگەڕێنینەوە)
+            // 2. پۆستەکە بوونی هەیە بەڵام هی ئەم بەکارهێنەرە نییە (کە دەبێت 403 Forbidden بگەڕێنینەوە)
+            // بۆ سادەیی، ئێمە وا دایدەنێین کە ئەگەر false بوو، یان پۆستەکە نییە یان هی خۆی نییە
+            // وەڵامێکی گشتی 404 دەتوانێت باش بێت بۆ ئاسایش (بۆ ئەوەی هێرشبەر نەزانێت ئایا پۆستەکە بوونی هەیە یان نا)
+            return NotFound();
+        }
+
+        return NoContent(); // 204 NoContent مانای ئەوەیە کە کارەکە بە سەرکەوتوویی ئەنجامدرا و هیچ ناوەڕۆکێک نییە بۆ گەڕاندنەوە
     }
 }
