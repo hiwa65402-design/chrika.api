@@ -1,16 +1,29 @@
+// using statements to import necessary libraries
+using Chrika.Api.Data;
+using Microsoft.EntityFrameworkCore;
+using Chrika.Api.Services; // Assuming your services are in this namespace
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- Section 1: Configure Services ---
+
+// 1. Add DbContext for Entity Framework
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+);
+
+// 2. Add Controllers
 builder.Services.AddControllers();
 
-// Register services
-builder.Services.AddScoped<Chrika.Api.Services.IUserService, Chrika.Api.Services.UserService>();
+// 3. Register your custom services (like UserService)
+builder.Services.AddScoped<IUserService, UserService>();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// 4. Add Swagger for API documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add CORS
+// 5. Add CORS to allow requests from your Blazor app
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -24,21 +37,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Use CORS
 app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication(); // We will add this later for login
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Configure to listen on all interfaces
-
 app.Run();
-

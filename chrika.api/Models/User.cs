@@ -1,6 +1,7 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema; // ئەمە زیاد بکە
 
-namespace Chrika.Api.Models
+namespace Chrika.Api.Models // یان Chrika.Api.Entities
 {
     public class User
     {
@@ -27,28 +28,28 @@ namespace Chrika.Api.Models
         public string PasswordHash { get; set; } = string.Empty;
 
         public string? ProfilePicture { get; set; }
-
         public string? Bio { get; set; }
-
         public DateTime DateOfBirth { get; set; }
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
         public bool IsActive { get; set; } = true;
-
         public bool IsVerified { get; set; } = false;
 
         // Navigation properties for social media features
-        public virtual ICollection<Post>? Posts { get; set; }
-        public virtual ICollection<Comment>? Comments { get; set; }
-        public virtual ICollection<Like>? Likes { get; set; }
-        public virtual ICollection<Follow>? Followers { get; set; }
-        public virtual ICollection<Follow>? Following { get; set; }
+        public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+
+        // === ڕاستکراوە ===
+        // ئەو پەیوەندیانەی کە من تێیدا 'فۆڵۆوەر'م
+        [InverseProperty("Follower")]
+        public virtual ICollection<Follow> Followings { get; set; } = new List<Follow>();
+
+        // ئەو پەیوەندیانەی کە من تێیدا 'فۆڵۆو کراوم'
+        [InverseProperty("Following")]
+        public virtual ICollection<Follow> Followers { get; set; } = new List<Follow>();
     }
 
-    // Additional models for social media functionality
     public class Post
     {
         public int Id { get; set; }
@@ -60,8 +61,8 @@ namespace Chrika.Api.Models
         public bool IsActive { get; set; } = true;
 
         public virtual User? User { get; set; }
-        public virtual ICollection<Comment>? Comments { get; set; }
-        public virtual ICollection<Like>? Likes { get; set; }
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
     }
 
     public class Comment
@@ -79,7 +80,7 @@ namespace Chrika.Api.Models
 
     public class Like
     {
-        public int Id { get; set; }
+        // === ڕاستکراوە: Id لابرا و Composite Key بەکارهێنرا ===
         public int PostId { get; set; }
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -90,13 +91,12 @@ namespace Chrika.Api.Models
 
     public class Follow
     {
-        public int Id { get; set; }
-        public int FollowerId { get; set; }
-        public int FollowingId { get; set; }
+        // === ڕاستکراوە: Id لابرا و Composite Key بەکارهێنرا ===
+        public int FollowerId { get; set; } // ئەو کەسەی فۆڵۆ دەکات
+        public int FollowingId { get; set; } // ئەو کەسەی فۆڵۆ دەکرێت
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual User? Follower { get; set; }
         public virtual User? Following { get; set; }
     }
 }
-
