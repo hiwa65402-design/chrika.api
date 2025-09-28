@@ -7,8 +7,7 @@ WORKDIR /app
 # Copy the solution file to the root of the WORKDIR
 COPY Chrika.Api.sln .
 
-# Copy the actual project directory (chrika.api) to the WORKDIR
-# This assumes your project folder is named 'chrika.api' (lowercase) and is directly under the Dockerfile's location
+# Copy the actual project directory (chrika.api - lowercase) to the WORKDIR
 COPY chrika.api/ chrika.api/
 
 # Restore dependencies for the solution
