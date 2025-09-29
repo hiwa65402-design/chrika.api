@@ -19,6 +19,10 @@ namespace Chrika.Api.Models // یان Chrika.Api.Entities
         [Required]
         [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
+       
+        [Required]
+        [StringLength(20)]
+        public string Role { get; set; } = "User"; //
 
         [Required]
         [StringLength(100)]
