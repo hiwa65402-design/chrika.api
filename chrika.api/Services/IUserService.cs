@@ -1,4 +1,5 @@
-﻿using Chrika.Api.DTOs;
+﻿using Chrika.Api.Dtos;
+using Chrika.Api.DTOs;
 
 namespace Chrika.Api.Services
 {
@@ -19,5 +20,7 @@ namespace Chrika.Api.Services
         // === گۆڕانکاری لێرەدایە ===
         // ئێستا لەبری UserDto، LoginResponseDto دەگەڕێنێتەوە کە تۆکنەکەی تێدایە
         Task<LoginResponseDto?> AuthenticateUserAsync(LoginDto loginDto);
+        Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto);
+
     }
 }

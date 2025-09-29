@@ -1,4 +1,5 @@
-﻿using Chrika.Api.DTOs;
+﻿using Chrika.Api.Dtos;
+using Chrika.Api.DTOs;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -132,6 +133,27 @@ namespace Chrika.Api.Controllers
 
             return Ok();
         }
+        // === Endpoint ـی نوێ بۆ گۆڕینی پاسۆرد ===
+        // POST: api/users/change-password
+        [HttpPost("change-password")]
+        [Authorize] // تەنها بەکارهێنەری لۆگینبوو دەتوانێت پاسۆردی خۆی بگۆڕێت
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
 
-    }
+            var success = await _userService.ChangePasswordAsync(int.Parse(userId), changePasswordDto);
+
+            if (!success)
+            {
+                return BadRequest("Incorrect current password or user not found.");
+            }
+
+            return Ok("Password changed successfully.");
+        }
+    
+}
 }

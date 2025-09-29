@@ -1,4 +1,5 @@
 ﻿using Chrika.Api.Data;
+using Chrika.Api.Dtos;
 using Chrika.Api.DTOs;
 using Chrika.Api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -177,5 +178,33 @@ namespace Chrika.Api.Services
             };
         }
         #endregion
+
+        public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto)
+        {
+            // 1. بەکارهێنەرەکە لە داتابەیس بدۆزەرەوە
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return false; // بەکارهێنەر بوونی نییە
+            }
+
+            // 2. دڵنیابە کە پاسۆردە کۆنەکە ڕاستە
+            if (!BCrypt.Net.BCrypt.Verify(changePasswordDto.CurrentPassword, user.PasswordHash))
+            {
+                return false; // پاسۆردی کۆن هەڵەیە
+            }
+
+            // 3. پاسۆردە نوێیەکە هاش بکە
+            var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(changePasswordDto.NewPassword);
+
+            // 4. پاسۆردە نوێیەکە خەزن بکە
+            user.PasswordHash = newPasswordHash;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
-}
+
+    }
