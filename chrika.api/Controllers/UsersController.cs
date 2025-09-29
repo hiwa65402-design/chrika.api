@@ -14,13 +14,13 @@ namespace Chrika.Api.Controllers
     {
         private readonly IUserService _userService;
         private readonly IFollowService _followService;
+        private readonly IFileService _fileService; 
 
-
-        public UsersController(IUserService userService, IFollowService followService)
+        public UsersController(IUserService userService, IFollowService followService, IFileService fileService) // <-- نوێکرایەوە
         {
             _userService = userService;
             _followService = followService;
-
+            _fileService = fileService; 
         }
 
 
@@ -153,6 +153,26 @@ namespace Chrika.Api.Controllers
             }
 
             return Ok("Password changed successfully.");
+        }
+        [HttpPost("profile-picture")]
+        [Authorize]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            // 1. وێنەکە خەزن بکە و URL ـەکەی وەربگرە
+            var imageUrl = await _fileService.SaveProfilePictureAsync(file);
+
+            // 2. URL ـەکە لە داتابەیس بۆ بەکارهێنەرەکە خەزن بکە
+            var success = await _userService.UpdateProfilePictureAsync(userId, imageUrl);
+
+            if (!success)
+                return NotFound("User not found.");
+
+            return Ok(new { profilePictureUrl = imageUrl });
         }
     
 }

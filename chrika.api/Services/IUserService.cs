@@ -21,6 +21,8 @@ namespace Chrika.Api.Services
         // ئێستا لەبری UserDto، LoginResponseDto دەگەڕێنێتەوە کە تۆکنەکەی تێدایە
         Task<LoginResponseDto?> AuthenticateUserAsync(LoginDto loginDto);
         Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto);
+        Task<bool> UpdateProfilePictureAsync(int userId, string imageUrl); // <-- زیادکرا
+
 
     }
 }

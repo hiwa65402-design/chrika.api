@@ -205,6 +205,18 @@ namespace Chrika.Api.Services
 
             return true;
         }
-    }
+        public async Task<bool> UpdateProfilePictureAsync(int userId, string imageUrl)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            user.ProfilePicture = imageUrl;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
     }
+
+}

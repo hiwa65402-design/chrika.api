@@ -30,6 +30,8 @@ builder.Services.AddScoped<ILikeService, LikeService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>(); 
 
 
 // 4. Add Authentication with JWT
@@ -108,6 +110,7 @@ app.UseHttpsRedirection();
 // گرنگ: ڕیزبەندی ئەم دووانە نابێت بگۆڕدرێت
 app.UseAuthentication(); // یەکەم: پشکنینی تۆکن
 app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
+app.UseStaticFiles(); // بۆ پیشاندانی فایلەکانی ناو wwwroot
 
 app.MapControllers();
 
