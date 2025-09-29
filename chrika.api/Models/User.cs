@@ -7,6 +7,7 @@ namespace Chrika.Api.Models // یان Chrika.Api.Entities
     {
         public int Id { get; set; }
 
+       
         [Required]
         [StringLength(50)]
         public string Username { get; set; } = string.Empty;
@@ -30,6 +31,8 @@ namespace Chrika.Api.Models // یان Chrika.Api.Entities
 
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
+        [StringLength(100)]
+        public string? Location { get; set; } // بۆ نموونە: "Sulaymaniyah", "Erbil", "Duhok"
 
         public string? ProfilePicture { get; set; }
         public string? Bio { get; set; }
@@ -103,4 +106,6 @@ namespace Chrika.Api.Models // یان Chrika.Api.Entities
         public virtual User? Follower { get; set; }
         public virtual User? Following { get; set; }
     }
-}
+
+        
+    }

@@ -115,6 +115,16 @@ app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
 app.UseStaticFiles(); // بۆ پیشاندانی فایلەکانی ناو wwwroot
 
 app.MapControllers();
+//using (var scope = app.Services.CreateScope())
+//{
+//    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//    try
+//    {
+//        await dbContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS `__EFMigrationsHistory`;");
+//        Console.WriteLine("SUCCESS: __EFMigrationsHistory table dropped.");
+//    }
+//    catch (Exception ex) { Console.WriteLine($"ERROR: {ex.Message}"); }
+//}
 
 
 // --- Section 4: Run the Application ---

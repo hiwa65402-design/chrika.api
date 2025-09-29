@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Chrika.Api.Models; // یان Chrika.Api.Entities
+using Chrika.Api.Models;
 
 namespace Chrika.Api.Data
 {
@@ -12,49 +12,69 @@ namespace Chrika.Api.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Like> Likes { get; set; }
         public DbSet<Follow> Follows { get; set; }
-        public DbSet<Notification> Notifications { get; set; } 
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Page> Pages { get; set; }
+        public DbSet<PagePost> PagePosts { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // === ڕاستکراوە: ڕێکخستنی Composite Keys ===
-
-            // 1. کلیل بۆ خشتەی Like
+            // === کلیلە تێکەڵەکان (Composite Keys) ===
             modelBuilder.Entity<Like>()
-                .HasKey(l => new { l.PostId, l.UserId }); // تێکەڵەیەک لە PostId و UserId
+                .HasKey(l => new { l.PostId, l.UserId });
 
-            // 2. کلیل بۆ خشتەی Follow
             modelBuilder.Entity<Follow>()
-                .HasKey(f => new { f.FollowerId, f.FollowingId }); // تێکەڵەیەک لە FollowerId و FollowingId
+                .HasKey(f => new { f.FollowerId, f.FollowingId });
 
-            // === ڕاستکراوە: ڕێکخستنی پەیوەندی Follow ===
+            // === پەیوەندی Follow ===
             modelBuilder.Entity<Follow>()
                 .HasOne(f => f.Follower)
-                .WithMany(u => u.Followings) // بەکارهێنانی ناوی ڕاستکراوە
+                .WithMany(u => u.Followings)
                 .HasForeignKey(f => f.FollowerId)
-                .OnDelete(DeleteBehavior.Restrict); // گرنگە بۆ voorkomingی کێشەی سڕینەوە
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Follow>()
                 .HasOne(f => f.Following)
-                .WithMany(u => u.Followers) // بەکارهێنانی ناوی ڕاستکراوە
+                .WithMany(u => u.Followers)
                 .HasForeignKey(f => f.FollowingId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
-            // === زیادکردنی ڕێکخستن بۆ Notification ===
+            // === پەیوەندی Notification ===
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.User)
-                .WithMany() // Userێک دەتوانێت چەندین Notificationـی هەبێت
+                .WithMany()
                 .HasForeignKey(n => n.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // ڕێگە نادەین User بسڕێتەوە ئەگەر Notificationـی هەبێت
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.TriggeredByUser)
                 .WithMany()
                 .HasForeignKey(n => n.TriggeredByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ======================================================
+            // === START: چارەسەری هەڵە نوێیەکە لێرەدایە ===
+            // ======================================================
+
+            // 1. پەیوەندی نێوان Post و Comment
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Post) // هەر کۆمێنتێک یەک پۆستی هەیە
+                .WithMany(p => p.Comments) // هەر پۆستێک چەندین کۆمێنتی هەیە
+                .HasForeignKey(c => c.PostId) // کلیلی بیانی ستوونی PostId ـە
+                .OnDelete(DeleteBehavior.Cascade); // ئەگەر پۆستێک سڕایەوە، هەموو کۆمێنتەکانیشی بسڕەوە
+
+            // 2. پەیوەندی نێوان Post و Like
+            modelBuilder.Entity<Like>()
+                .HasOne(l => l.Post) // هەر لایکێک بۆ یەک پۆستە
+                .WithMany(p => p.Likes) // هەر پۆستێک چەندین لایکی هەیە
+                .HasForeignKey(l => l.PostId) // کلیلی بیانی ستوونی PostId ـە
+                .OnDelete(DeleteBehavior.Cascade); // ئەگەر پۆستێک سڕایەوە، هەموو لایکەکانیشی بسڕەوە
+
+            // ======================================================
+            // === END: کۆتایی چارەسەرەکە ===
+            // ======================================================
         }
     }
 }
