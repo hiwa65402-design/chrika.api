@@ -97,10 +97,45 @@ namespace Chrika.Api.Services
         {
             throw new System.NotImplementedException();
         }
-        public Task<PostDto?> UpdatePostAsync(int postId, UpdatePostDto updatePostDto, int userId)
+        public async Task<PostDto?> UpdatePostAsync(int postId, UpdatePostDto updatePostDto, int userId)
         {
-            throw new System.NotImplementedException();
+            // 1. پۆستەکە لە داتابەیس بدۆزەرەوە
+            var post = await _context.Posts
+                                     .Include(p => p.User) // بۆ گەڕاندنەوەی PostDto پێویستمانە
+                                     .FirstOrDefaultAsync(p => p.Id == postId);
+
+            // 2. ئەگەر پۆستەکە بوونی نەبوو، null بگەڕێنەرەوە
+            if (post == null)
+            {
+                return null;
+            }
+
+            // 3. پشکنینی خاوەندارێتی
+            if (post.UserId != userId)
+            {
+                return null; // یان دەتوانین exceptionـێک هەڵبدەین
+            }
+
+            // 4. نوێکردنەوەی ناوەڕۆکی پۆستەکە
+            post.Content = updatePostDto.Content;
+            post.UpdatedAt = DateTime.UtcNow;
+
+            // 5. خەزنکردنی گۆڕانکارییەکان
+            await _context.SaveChangesAsync();
+
+            // 6. گەڕاندنەوەی پۆستە نوێکراوەکە وەک DTO
+            return new PostDto
+            {
+                Id = post.Id,
+                Content = post.Content,
+                ImageUrl = post.ImageUrl,
+                CreatedAt = post.CreatedAt,
+                Username = post.User.Username,
+                LikesCount = post.Likes?.Count() ?? 0,
+                CommentsCount = post.Comments?.Count() ?? 0
+            };
         }
-        
+
+
     }
 }

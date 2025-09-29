@@ -63,5 +63,26 @@ public class PostsController : ControllerBase
 
         return NoContent();
     }
+    // PUT: api/posts/5
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdatePost(int id, UpdatePostDto updatePostDto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var updatedPost = await _postService.UpdatePostAsync(id, updatePostDto, int.Parse(userId));
+
+        if (updatedPost == null)
+        {
+            // وەک Delete، ئەمە یان پۆستەکە نییە یان هی ئەم بەکارهێنەرە نییە
+            return NotFound();
+        }
+
+        return Ok(updatedPost);
+    }
 
 }
