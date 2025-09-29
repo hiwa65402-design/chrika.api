@@ -15,14 +15,25 @@ public class PostsController : ControllerBase
     {
         _postService = postService;
     }
+    [HttpGet("feed")]
+    [Authorize] // تەنها بەکارهێنەری لۆگینبوو دەتوانێت Feed ـی خۆی ببینێت
+    public async Task<IActionResult> GetUserFeed()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
 
-    // GET: api/posts - وەرگرتنی هەموو پۆستەکان (بۆ هەمووان کراوەیە)
+        var feed = await _postService.GetFeedForUserAsync(int.Parse(userId));
+        return Ok(feed);
+    }
+
+    // GET: api/posts - وەرگرتنی هەموو پۆستەکان (Explore Page)
     [HttpGet]
     public async Task<IActionResult> GetPosts()
     {
         var posts = await _postService.GetAllPostsAsync();
         return Ok(posts);
     }
+ 
 
     // POST: api/posts - دروستکردنی پۆستی نوێ (تەنها بۆ بەکارهێنەری لۆگینبوو)
     [HttpPost]

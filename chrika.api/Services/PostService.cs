@@ -136,6 +136,38 @@ namespace Chrika.Api.Services
             };
         }
 
+        public async Task<IEnumerable<PostDto>> GetFeedForUserAsync(int userId)
+        {
+            // 1. لیستی IDی ئەو کەسانە وەربگرە کە بەکارهێنەرەکە فۆڵۆی کردوون
+            var followingIds = await _context.Follows
+                .Where(f => f.FollowerId == userId)
+                .Select(f => f.FollowingId)
+                .ToListAsync();
+
+            // 2. IDی بەکارهێنەرەکە خۆشی بخەرە ناو لیستەکەوە بۆ ئەوەی پۆستەکانی خۆشی ببینێت
+            followingIds.Add(userId);
+
+            // 3. هەموو ئەو پۆستانە بهێنەرەوە کە UserId ـیان لەناو لیستی `followingIds` دایە
+            var feedPosts = await _context.Posts
+                .Where(p => followingIds.Contains(p.UserId)) // گرنگترین بەش
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .Include(p => p.Comments)
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new PostDto // ڕاستەوخۆ لێرەدا دەیگۆڕین بۆ DTO
+                {
+                    Id = p.Id,
+                    Content = p.Content,
+                    ImageUrl = p.ImageUrl,
+                    CreatedAt = p.CreatedAt,
+                    Username = p.User.Username,
+                    LikesCount = p.Likes.Count,
+                    CommentsCount = p.Comments.Count
+                })
+                .ToListAsync();
+
+            return feedPosts;
+        }
 
     }
 }
