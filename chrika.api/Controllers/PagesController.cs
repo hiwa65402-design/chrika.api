@@ -1,5 +1,5 @@
 ﻿using Chrika.Api.Data;
-using Chrika.Api.Dtos;
+using Chrika.Api.DTOs;
 using Chrika.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -77,7 +77,6 @@ public class PagesController : ControllerBase
 
         return Ok(pageDto);
     }
-    // ... (لەناو کڵاسی PagesController)
 
     // POST: api/pages/{pageId}/posts
     [HttpPost("{pageId}/posts")]

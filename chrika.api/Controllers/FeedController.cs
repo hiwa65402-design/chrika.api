@@ -1,5 +1,4 @@
 ﻿using Chrika.Api.Data;
-using Chrika.Api.Dtos;
 using Chrika.Api.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
