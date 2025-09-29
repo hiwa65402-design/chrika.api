@@ -8,40 +8,35 @@ namespace Chrika.Api.Services
     public class FollowService : IFollowService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService; // <-- زیادکرا
 
-        public FollowService(ApplicationDbContext context)
+        // constructor نوێکرایەوە
+        public FollowService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService; // <-- زیادکرا
         }
 
         public async Task<bool> ToggleFollowAsync(int followerId, int followingId)
         {
-            // نابێت کەسێک خۆی فۆڵۆ بکات
-            if (followerId == followingId)
-            {
-                return false;
-            }
+            if (followerId == followingId) return false;
 
-            // پشکنین بکە بزانە ئەو بەکارهێنەرەی کە دەتەوێت فۆڵۆی بکەیت بوونی هەیە
             var userToFollowExists = await _context.Users.AnyAsync(u => u.Id == followingId);
-            if (!userToFollowExists)
-            {
-                return false;
-            }
+            if (!userToFollowExists) return false;
 
-            // بزانە ئایا پێشتر فۆڵۆت کردووە
             var existingFollow = await _context.Follows
                 .FirstOrDefaultAsync(f => f.FollowerId == followerId && f.FollowingId == followingId);
 
             if (existingFollow == null)
             {
-                // ئەگەر فۆڵۆت نەکردبوو، پەیوەندییەکی نوێی فۆڵۆ دروست بکە
                 var follow = new Follow { FollowerId = followerId, FollowingId = followingId };
                 _context.Follows.Add(follow);
+
+                // === لێرەدا ئاگادارکردنەوە دروست دەکەین ===
+                await _notificationService.CreateNotificationAsync(followingId, followerId, NotificationType.NewFollower, null);
             }
             else
             {
-                // ئەگەر فۆڵۆت کردبوو، پەیوەندییەکە بسڕەوە
                 _context.Follows.Remove(existingFollow);
             }
 

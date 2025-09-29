@@ -11,16 +11,19 @@ namespace Chrika.Api.Services
     public class CommentService : ICommentService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService; // <-- زیادکرا
 
-        public CommentService(ApplicationDbContext context)
+        // constructor نوێکرایەوە
+        public CommentService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService; // <-- زیادکرا
         }
 
         public async Task<CommentDto?> CreateCommentAsync(int postId, CreateCommentDto createCommentDto, int userId)
         {
             var post = await _context.Posts.FindAsync(postId);
-            if (post == null) return null; // پۆستەکە بوونی نییە
+            if (post == null) return null;
 
             var comment = new Comment
             {
@@ -33,9 +36,14 @@ namespace Chrika.Api.Services
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
+            // === لێرەدا ئاگادارکردنەوە دروست دەکەین ===
+            await _notificationService.CreateNotificationAsync(post.UserId, userId, NotificationType.NewComment, postId);
+
             var user = await _context.Users.FindAsync(userId);
             return MapToCommentDto(comment, user);
         }
+
+        // ... (باقی میتۆدەکانی تر وەک خۆیان بمێننەوە) ...
 
         public async Task<IEnumerable<CommentDto>> GetCommentsForPostAsync(int postId)
         {
@@ -52,7 +60,6 @@ namespace Chrika.Api.Services
             var comment = await _context.Comments.FindAsync(commentId);
             if (comment == null) return false;
 
-            // پشکنینی خاوەندارێتی: یان خاوەنی کۆمێنتەکە بیت، یان خاوەنی پۆستەکە بیت
             var post = await _context.Posts.FindAsync(comment.PostId);
             if (comment.UserId != userId && post.UserId != userId)
             {

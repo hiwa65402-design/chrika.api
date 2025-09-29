@@ -8,34 +8,33 @@ namespace Chrika.Api.Services
     public class LikeService : ILikeService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService; // <-- زیادکرا
 
-        public LikeService(ApplicationDbContext context)
+        // constructor نوێکرایەوە
+        public LikeService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService; // <-- زیادکرا
         }
 
         public async Task<bool> ToggleLikeAsync(int postId, int userId)
         {
-            // پشکنین بکە بزانە پۆستەکە بوونی هەیە
-            var postExists = await _context.Posts.AnyAsync(p => p.Id == postId);
-            if (!postExists)
-            {
-                return false; // پۆستەکە بوونی نییە
-            }
+            var post = await _context.Posts.FindAsync(postId);
+            if (post == null) return false;
 
-            // بزانە ئایا بەکارهێنەرەکە پێشتر ئەم پۆستەی لایک کردووە
             var existingLike = await _context.Likes
                 .FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == userId);
 
             if (existingLike == null)
             {
-                // ئەگەر لایکی نەکردبوو، لایکێکی نوێ زیاد بکە
                 var like = new Like { PostId = postId, UserId = userId };
                 _context.Likes.Add(like);
+
+                // === لێرەدا ئاگادارکردنەوە دروست دەکەین ===
+                await _notificationService.CreateNotificationAsync(post.UserId, userId, NotificationType.NewLike, postId);
             }
             else
             {
-                // ئەگەر لایکی کردبوو، لایکەکە بسڕەوە
                 _context.Likes.Remove(existingLike);
             }
 

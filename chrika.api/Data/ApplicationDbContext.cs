@@ -12,6 +12,8 @@ namespace Chrika.Api.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Like> Likes { get; set; }
         public DbSet<Follow> Follows { get; set; }
+        public DbSet<Notification> Notifications { get; set; } 
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,6 +40,20 @@ namespace Chrika.Api.Data
                 .HasOne(f => f.Following)
                 .WithMany(u => u.Followers) // بەکارهێنانی ناوی ڕاستکراوە
                 .HasForeignKey(f => f.FollowingId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            // === زیادکردنی ڕێکخستن بۆ Notification ===
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany() // Userێک دەتوانێت چەندین Notificationـی هەبێت
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Restrict); // ڕێگە نادەین User بسڕێتەوە ئەگەر Notificationـی هەبێت
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.TriggeredByUser)
+                .WithMany()
+                .HasForeignKey(n => n.TriggeredByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
