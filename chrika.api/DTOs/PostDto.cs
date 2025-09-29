@@ -10,6 +10,10 @@
         public string? Username { get; set; } // ناوی خاوەنی پۆستەکە
         public int LikesCount { get; set; }
         public int CommentsCount { get; set; }
+        public bool IsSponsoredPost { get; set; } = false;
+        public int UserId { get;  set; }
+        public string? UserProfilePicture { get;  set; }
+        public bool IsLikedByCurrentUser { get;  set; }
     }
 
     // ئەمە بۆ وەرگرتنی زانیاری لە کاتی دروستکردنی پۆستی نوێ
