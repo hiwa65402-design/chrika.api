@@ -2,6 +2,7 @@
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 
 namespace Chrika.Api.Controllers
@@ -11,11 +12,14 @@ namespace Chrika.Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IFollowService _followService;
+
 
         public UsersController(IUserService userService)
         {
             _userService = userService;
         }
+
 
         // === گۆڕانکاری لێرەدایە ===
         [HttpPost("authenticate")]
@@ -31,7 +35,7 @@ namespace Chrika.Api.Controllers
 
         #region Other Endpoints
         [HttpGet]
-        [Authorize] 
+        [Authorize]
 
         public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
@@ -106,5 +110,26 @@ namespace Chrika.Api.Controllers
             return Ok(new { email, available = !exists });
         }
         #endregion
+
+        [HttpPost("{id}/follow")]
+        [Authorize]
+        public async Task<IActionResult> ToggleFollow(int id)
+        {
+            // وەرگرتنی IDی ئەو کەسەی کە داواکارییەکەی ناردووە (follower)
+            var followerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (followerId == null) return Unauthorized();
+
+            // id: IDی ئەو کەسەیە کە دەمانەوێت فۆڵۆی بکەین (following)
+            var success = await _followService.ToggleFollowAsync(int.Parse(followerId), id);
+
+            if (!success)
+            {
+                // یان بەکارهێنەرەکە بوونی نییە، یان هەوڵی داوە خۆی فۆڵۆ بکات
+                return BadRequest("Unable to follow this user.");
+            }
+
+            return Ok();
+        }
+
     }
 }
