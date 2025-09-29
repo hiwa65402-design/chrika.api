@@ -64,14 +64,15 @@ public class NotificationsController : ControllerBase
         return NoContent();
     }
 
-    private string GenerateMessage(NotificationType type, string username)
+   private static string GenerateMessage(NotificationType type, string username)
+{
+    return type switch
     {
-        return type switch
-        {
-            NotificationType.NewFollower => $"{username} started following you.",
-            NotificationType.NewLike => $"{username} liked your post.",
-            NotificationType.NewComment => $"{username} commented on your post.",
-            _ => "You have a new notification."
-        };
-    }
+        NotificationType.NewFollower => $"{username} started following you.",
+        NotificationType.NewLike => $"{username} liked your post.",
+        NotificationType.NewComment => $"{username} commented on your post.",
+        _ => "You have a new notification."
+    };
+}
+
 }
