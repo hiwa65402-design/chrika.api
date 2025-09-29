@@ -77,4 +77,53 @@ public class PagesController : ControllerBase
 
         return Ok(pageDto);
     }
+    // ... (لەناو کڵاسی PagesController)
+
+    // POST: api/pages/{pageId}/posts
+    [HttpPost("{pageId}/posts")]
+    public async Task<ActionResult<PagePostDto>> CreatePagePost(int pageId, [FromBody] CreatePagePostDto createPostDto)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // 1. پشکنین بکە بزانە پەیجەکە بوونی هەیە
+        var page = await _context.Pages.FindAsync(pageId);
+        if (page == null)
+        {
+            return NotFound("Page not found.");
+        }
+
+        // 2. پشکنین بکە بزانە ئایا بەکارهێنەری ئێستا خاوەنی پەیجەکەیە
+        if (page.OwnerId != userId)
+        {
+            return Forbid("You are not the owner of this page.");
+        }
+
+        // 3. پۆستە نوێیەکە دروست بکە
+        var pagePost = new PagePost
+        {
+            Content = createPostDto.Content,
+            ImageUrl = createPostDto.ImageUrl,
+            PageId = pageId
+        };
+
+        _context.PagePosts.Add(pagePost);
+        await _context.SaveChangesAsync();
+
+        // 4. ئەنجامەکە بگەڕێنەرەوە
+        var pagePostDto = new PagePostDto
+        {
+            Id = pagePost.Id,
+            Content = pagePost.Content,
+            ImageUrl = pagePost.ImageUrl,
+            CreatedAt = pagePost.CreatedAt,
+            PageId = pagePost.PageId,
+            IsSponsored = pagePost.IsSponsored, // بە دڵنیاییەوە false دەبێت
+            SponsoredUntil = pagePost.SponsoredUntil,
+            TargetLocation = pagePost.TargetLocation
+        };
+
+        // دەتوانین Endpointێکی GetPagePost دروست بکەین، بەڵام بۆ ئێستا با بەم شێوەیە بێت
+        return Ok(pagePostDto);
+    }
+
 }
