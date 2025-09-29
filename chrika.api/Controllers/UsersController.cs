@@ -15,9 +15,11 @@ namespace Chrika.Api.Controllers
         private readonly IFollowService _followService;
 
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IFollowService followService)
         {
             _userService = userService;
+            _followService = followService;
+
         }
 
 
