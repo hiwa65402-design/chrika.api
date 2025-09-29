@@ -15,6 +15,8 @@ namespace Chrika.Api.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Page> Pages { get; set; }
         public DbSet<PagePost> PagePosts { get; set; }
+        public DbSet<AdCampaign> AdCampaigns { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -71,6 +73,9 @@ namespace Chrika.Api.Data
                 .WithMany(p => p.Likes) // هەر پۆستێک چەندین لایکی هەیە
                 .HasForeignKey(l => l.PostId) // کلیلی بیانی ستوونی PostId ـە
                 .OnDelete(DeleteBehavior.Cascade); // ئەگەر پۆستێک سڕایەوە، هەموو لایکەکانیشی بسڕەوە
+
+          modelBuilder.Entity<AdCampaign>()
+                .OwnsOne(c => c.Audience); //بۆ سپۆنسەرە 
 
             // ======================================================
             // === END: کۆتایی چارەسەرەکە ===
