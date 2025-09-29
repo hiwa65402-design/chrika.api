@@ -125,4 +125,51 @@ public class AdCampaignsController : ControllerBase
 
         return Ok(campaignDto);
     }
+    // ... (لەناو کڵاسی AdCampaignsController)
+
+    // POST: api/adcampaigns/{id}/launch
+    [HttpPost("{id}/launch")]
+    public async Task<IActionResult> LaunchCampaign(int id)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // 1. کەمپەینەکە بدۆزەرەوە
+        var campaign = await _context.AdCampaigns
+            .Include(c => c.PagePost.Page)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (campaign == null)
+        {
+            return NotFound("Campaign not found.");
+        }
+
+        // 2. پشکنینی خاوەندارێتی
+        if (campaign.PagePost.Page.OwnerId != userId)
+        {
+            return Forbid("You can only launch campaigns for your own pages.");
+        }
+
+        // 3. پشکنینی دۆخی کەمپەین
+        if (campaign.Status != "Draft")
+        {
+            return BadRequest($"Campaign cannot be launched. Current status: {campaign.Status}.");
+        }
+
+        // 4. پشکنینی مێژوو (نابێت کەمپەینێکی کۆن دەست پێبکرێت)
+        if (campaign.EndDate < DateTime.UtcNow)
+        {
+            return BadRequest("This campaign has already expired and cannot be launched.");
+        }
+
+        // لێرەدا دەتوانین لۆجیکی پارەدان جێبەجێ بکەین
+        // PaymentGateway.Process(campaign.Budget, campaign.Currency);
+        // ئەگەر پارەدان سەرکەوتوو بوو، بەردەوام دەبین
+
+        // 5. گۆڕینی دۆخ و خەزنکردن
+        campaign.Status = "Active";
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Campaign launched successfully!", campaignId = campaign.Id, newStatus = campaign.Status });
+    }
+
 }
