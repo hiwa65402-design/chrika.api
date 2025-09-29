@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
+// ... (using statements وەک خۆیان)
+
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
@@ -18,14 +20,14 @@ public class FeedController : ControllerBase
         _context = context;
     }
 
-    // GET: api/feed
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PostDto>>> GetMyFeed()
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        var userLocation = (await _context.Users.FindAsync(userId))?.Location;
+        var user = await _context.Users.FindAsync(userId);
+        var userLocation = user?.Location;
 
-        // 1. وەرگرتنی پۆستی ئەو کەسانەی فۆڵۆت کردوون
+        // 1. وەرگرتنی پۆستی ئەو کەسانەی فۆڵۆت کردوون (وەک خۆی)
         var followingIds = await _context.Follows
             .Where(f => f.FollowerId == userId)
             .Select(f => f.FollowingId)
@@ -52,13 +54,17 @@ public class FeedController : ControllerBase
             })
             .ToListAsync();
 
-        // 2. وەرگرتنی ڕیکلامە چالاکەکان
-        var activeAds = await _context.AdCampaigns
-            .Where(c => c.Status == "Active" &&
-                           c.EndDate > DateTime.UtcNow &&
-                           (c.Audience.Locations.Count == 0 || c.Audience.Locations.Contains(userLocation)))
-            .Include(c => c.PagePost.Page.Owner) // دڵنیابە Owner لۆد کراوە
-            .Select(c => new PostDto // گۆڕینی پۆستی پەیج بۆ هەمان فۆرماتی PostDto
+        // === گۆڕانکاری سەرەکی لێرەدایە ===
+        // 2. وەرگرتنی هەموو ڕیکلامە چالاکەکان و هێنانیان بۆ میمۆری
+        var allActiveCampaigns = await _context.AdCampaigns
+            .Where(c => c.Status == "Active" && c.EndDate > DateTime.UtcNow)
+            .Include(c => c.PagePost.Page.Owner)
+            .ToListAsync(); // <-- گرنگ: هەمووی بهێنە ناو میمۆری
+
+        // 3. فلتەرکردنی ڕیکلامەکان لەناو میمۆری (Client-side evaluation)
+        var relevantAds = allActiveCampaigns
+            .Where(c => c.Audience.Locations.Count == 0 || (userLocation != null && c.Audience.Locations.Contains(userLocation)))
+            .Select(c => new PostDto
             {
                 Id = c.PagePost.Id,
                 Content = c.PagePost.Content,
@@ -69,24 +75,24 @@ public class FeedController : ControllerBase
                 UserProfilePicture = c.PagePost.Page.ProfilePicture,
                 IsSponsoredPost = true
             })
-            .ToListAsync();
+            .ToList();
 
-        // 3. تێکەڵکردنی ڕیکلامەکان لەگەڵ پۆستەکان
+        // 4. تێکەڵکردنی ڕیکلامەکان لەگەڵ پۆستەکان (وەک خۆی)
         var combinedFeed = new List<PostDto>();
         combinedFeed.AddRange(feedPosts);
 
         int adIndex = 0;
         for (int i = 5; i < combinedFeed.Count; i += 6)
         {
-            if (adIndex < activeAds.Count)
+            if (adIndex < relevantAds.Count)
             {
-                combinedFeed.Insert(i, activeAds[adIndex]);
+                combinedFeed.Insert(i, relevantAds[adIndex]);
                 adIndex++;
             }
         }
-        while (adIndex < activeAds.Count)
+        while (adIndex < relevantAds.Count)
         {
-            combinedFeed.Add(activeAds[adIndex]);
+            combinedFeed.Add(relevantAds[adIndex]);
             adIndex++;
         }
 
