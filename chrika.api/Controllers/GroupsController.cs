@@ -34,4 +34,25 @@ public class GroupsController : ControllerBase
         // return CreatedAtAction(nameof(GetGroup), new { id = createdGroup.Id }, createdGroup);
         return Ok(createdGroup); // بۆ سادەیی، ئێستا تەنها Ok دەگەڕێنینەوە
     }
+    // GET: api/groups/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<GroupDto>> GetGroup(int id)
+    {
+        var group = await _groupService.GetGroupByIdAsync(id);
+        if (group == null)
+        {
+            return NotFound($"Group with ID {id} not found.");
+        }
+
+        // لێرەدا دەبێت پشکنینی گرووپی Private بکەین، بەڵام بۆ دواتر
+        return Ok(group);
+    }
+
+    // GET: api/groups
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<GroupDto>>> GetAllGroups()
+    {
+        var groups = await _groupService.GetAllPublicGroupsAsync();
+        return Ok(groups);
+    }
 }
