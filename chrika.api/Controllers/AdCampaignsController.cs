@@ -35,10 +35,8 @@ public class AdCampaignsController : ControllerBase
             return NotFound("The specified page post does not exist.");
         }
 
-        // === گۆڕانکاری یەکەم ===
         if (pagePost.Page.OwnerId != userId)
         {
-            // return Forbid("You can only create campaigns for posts on your own pages.");
             return StatusCode(403, "You can only create campaigns for posts on your own pages.");
         }
 
@@ -54,7 +52,7 @@ public class AdCampaignsController : ControllerBase
             Currency = createDto.Currency,
             StartDate = createDto.StartDate,
             EndDate = createDto.EndDate,
-            Status = "Draft",
+            Status = CampaignStatus.Draft, // <-- چاککرا: بەکارهێنانی enum
             Audience = new TargetAudience
             {
                 Locations = createDto.Audience.Locations,
@@ -71,7 +69,7 @@ public class AdCampaignsController : ControllerBase
         {
             Id = campaign.Id,
             PagePostId = campaign.PagePostId,
-            Status = campaign.Status,
+            Status = campaign.Status.ToString(), // <-- چاککرا: گۆڕینی enum بۆ string بۆ پیشاندان
             Budget = campaign.Budget,
             Currency = campaign.Currency,
             StartDate = campaign.StartDate,
@@ -97,10 +95,8 @@ public class AdCampaignsController : ControllerBase
             return NotFound();
         }
 
-        // === گۆڕانکاری دووەم ===
         if (campaign.PagePost.Page.OwnerId != userId)
         {
-            // return Forbid();
             return StatusCode(403, "You do not have permission to view this campaign.");
         }
 
@@ -108,7 +104,7 @@ public class AdCampaignsController : ControllerBase
         {
             Id = campaign.Id,
             PagePostId = campaign.PagePostId,
-            Status = campaign.Status,
+            Status = campaign.Status.ToString(), // <-- چاککرا: گۆڕینی enum بۆ string
             Budget = campaign.Budget,
             Currency = campaign.Currency,
             StartDate = campaign.StartDate,
@@ -140,14 +136,12 @@ public class AdCampaignsController : ControllerBase
             return NotFound("Campaign not found.");
         }
 
-        // === گۆڕانکاری سێیەم ===
         if (campaign.PagePost.Page.OwnerId != userId)
         {
-            // return Forbid("You can only launch campaigns for your own pages.");
             return StatusCode(403, "You can only launch campaigns for your own pages.");
         }
 
-        if (campaign.Status != "Draft")
+        if (campaign.Status != CampaignStatus.Draft) // <-- چاککرا: بەکارهێنانی enum
         {
             return BadRequest($"Campaign cannot be launched. Current status: {campaign.Status}.");
         }
@@ -157,9 +151,19 @@ public class AdCampaignsController : ControllerBase
             return BadRequest("This campaign has already expired and cannot be launched.");
         }
 
-        campaign.Status = "Active";
+        campaign.Status = CampaignStatus.Active; // <-- چاککرا: بەکارهێنانی enum
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Campaign launched successfully!", campaignId = campaign.Id, newStatus = campaign.Status });
+        return Ok(new { message = "Campaign launched successfully!", campaignId = campaign.Id, newStatus = campaign.Status.ToString() });
     }
+    //[HttpDelete("clear-all-campaigns-for-debug")]
+    //[AllowAnonymous] // با پێویست بە لۆگین نەبێت
+    //public async Task<IActionResult> ClearAllCampaigns()
+    //{
+    //    var allCampaigns = await _context.AdCampaigns.ToListAsync();
+    //    _context.AdCampaigns.RemoveRange(allCampaigns);
+    //    await _context.SaveChangesAsync();
+    //    return Ok("All campaigns have been deleted.");
+    //}
+
 }

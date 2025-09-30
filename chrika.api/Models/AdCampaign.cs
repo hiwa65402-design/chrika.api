@@ -11,7 +11,8 @@ namespace Chrika.Api.Models
         public virtual PagePost? PagePost { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Draft"; // Draft, Active, Paused, Completed
+        //public string Status { get; set; } = "Draft"; // Draft, Active, Paused, Completed
+        public CampaignStatus Status { get; set; } = CampaignStatus.Draft; // <-- ئەم هێڵە نوێیە دابنێ
 
         [Column(TypeName = "decimal(18, 2)")]
         public decimal Budget { get; set; }

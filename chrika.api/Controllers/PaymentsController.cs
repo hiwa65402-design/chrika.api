@@ -28,11 +28,14 @@ public class PaymentsController : ControllerBase
             .Include(c => c.PagePost.Page)
             .FirstOrDefaultAsync(c => c.Id == request.CampaignId);
 
-        // پشکنینەکان
-        if (campaign == null || campaign.PagePost.Page.OwnerId != userId || campaign.Status != "Draft")
+
+        // if (campaign == null || campaign.PagePost.Page.OwnerId != userId || campaign.Status != "Draft")
+        if (campaign == null || campaign.PagePost.Page.OwnerId != userId || campaign.Status != CampaignStatus.Draft) 
         {
             return BadRequest(new { message = "Invalid campaign for payment." });
         }
+
+
 
         // 1. دروستکردنی مامەڵەیەکی نوێ بە دۆخی "Pending"
         var transaction = new Transaction

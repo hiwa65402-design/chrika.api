@@ -14,6 +14,7 @@
         public int UserId { get;  set; }
         public string? UserProfilePicture { get;  set; }
         public bool IsLikedByCurrentUser { get;  set; }
+        public int AdCampaignId { get;  set; }
     }
 
     // ئەمە بۆ وەرگرتنی زانیاری لە کاتی دروستکردنی پۆستی نوێ
