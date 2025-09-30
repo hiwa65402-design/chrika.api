@@ -1,6 +1,7 @@
 ﻿using Chrika.Api.Data;
 using Chrika.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Threading.Tasks;
 
 namespace Chrika.Api.Services
@@ -9,21 +10,26 @@ namespace Chrika.Api.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly INotificationService _notificationService;
-        private readonly IAnalyticsService _analyticsService; // <-- زیادکرا
+        private readonly IAnalyticsService _analyticsService;
 
-        // === constructor نوێکرایەوە بۆ وەرگرتنی هەرسێ سێرڤسەکە ===
         public LikeService(ApplicationDbContext context, INotificationService notificationService, IAnalyticsService analyticsService)
         {
             _context = context;
             _notificationService = notificationService;
-            _analyticsService = analyticsService; // <-- زیادکرا
+            _analyticsService = analyticsService;
         }
 
         public async Task<bool> ToggleLikeAsync(int postId, int userId)
         {
-            // پشکنینی بوونی پۆست (ئەمە بۆ هەردوو جۆری پۆست کار دەکات)
+            // === زیادکرا: پشکنینی بوونی پۆست و بەکارهێنەر ===
             var postExists = await _context.Posts.AnyAsync(p => p.Id == postId) || await _context.PagePosts.AnyAsync(pp => pp.Id == postId);
-            if (!postExists) return false;
+            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+
+            // ئەگەر یەکێکیان بوونی نەبوو، فانکشنەکە دەوەستێت و هەڵە ڕوونادات
+            if (!postExists || !userExists)
+            {
+                return false;
+            }
 
             var existingLike = await _context.Likes.FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == userId);
 
@@ -32,14 +38,12 @@ namespace Chrika.Api.Services
                 var like = new Like { PostId = postId, UserId = userId };
                 _context.Likes.Add(like);
 
-                // تۆمارکردنی ئاگادارکردنەوە (تەنها بۆ پۆستی ئاسایی)
                 var userPost = await _context.Posts.FindAsync(postId);
                 if (userPost != null)
                 {
                     await _notificationService.CreateNotificationAsync(userPost.UserId, userId, NotificationType.NewLike, postId);
                 }
 
-                // === زیادکرا: تۆمارکردنی ئامار ===
                 await CheckAndRecordInteraction(postId, InteractionType.Like, userId);
             }
             else
@@ -51,7 +55,6 @@ namespace Chrika.Api.Services
             return true;
         }
 
-        // === زیادکرا: میتۆدێکی یاریدەدەر ===
         private async Task CheckAndRecordInteraction(int postId, InteractionType type, int userId)
         {
             var pagePost = await _context.PagePosts.FirstOrDefaultAsync(pp => pp.Id == postId);
