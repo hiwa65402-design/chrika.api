@@ -8,30 +8,39 @@ namespace Chrika.Api.Services
     public class LikeService : ILikeService
     {
         private readonly ApplicationDbContext _context;
-        private readonly INotificationService _notificationService; // <-- زیادکرا
+        private readonly INotificationService _notificationService;
+        private readonly IAnalyticsService _analyticsService; // <-- زیادکرا
 
-        // constructor نوێکرایەوە
-        public LikeService(ApplicationDbContext context, INotificationService notificationService)
+        // === constructor نوێکرایەوە بۆ وەرگرتنی هەرسێ سێرڤسەکە ===
+        public LikeService(ApplicationDbContext context, INotificationService notificationService, IAnalyticsService analyticsService)
         {
             _context = context;
-            _notificationService = notificationService; // <-- زیادکرا
+            _notificationService = notificationService;
+            _analyticsService = analyticsService; // <-- زیادکرا
         }
 
         public async Task<bool> ToggleLikeAsync(int postId, int userId)
         {
-            var post = await _context.Posts.FindAsync(postId);
-            if (post == null) return false;
+            // پشکنینی بوونی پۆست (ئەمە بۆ هەردوو جۆری پۆست کار دەکات)
+            var postExists = await _context.Posts.AnyAsync(p => p.Id == postId) || await _context.PagePosts.AnyAsync(pp => pp.Id == postId);
+            if (!postExists) return false;
 
-            var existingLike = await _context.Likes
-                .FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == userId);
+            var existingLike = await _context.Likes.FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == userId);
 
             if (existingLike == null)
             {
                 var like = new Like { PostId = postId, UserId = userId };
                 _context.Likes.Add(like);
 
-                // === لێرەدا ئاگادارکردنەوە دروست دەکەین ===
-                await _notificationService.CreateNotificationAsync(post.UserId, userId, NotificationType.NewLike, postId);
+                // تۆمارکردنی ئاگادارکردنەوە (تەنها بۆ پۆستی ئاسایی)
+                var userPost = await _context.Posts.FindAsync(postId);
+                if (userPost != null)
+                {
+                    await _notificationService.CreateNotificationAsync(userPost.UserId, userId, NotificationType.NewLike, postId);
+                }
+
+                // === زیادکرا: تۆمارکردنی ئامار ===
+                await CheckAndRecordInteraction(postId, InteractionType.Like, userId);
             }
             else
             {
@@ -40,6 +49,22 @@ namespace Chrika.Api.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // === زیادکرا: میتۆدێکی یاریدەدەر ===
+        private async Task CheckAndRecordInteraction(int postId, InteractionType type, int userId)
+        {
+            var pagePost = await _context.PagePosts.FirstOrDefaultAsync(pp => pp.Id == postId);
+            if (pagePost != null)
+            {
+                var activeCampaign = await _context.AdCampaigns
+                    .FirstOrDefaultAsync(c => c.PagePostId == postId && c.Status == CampaignStatus.Active && c.EndDate > DateTime.UtcNow);
+
+                if (activeCampaign != null)
+                {
+                    await _analyticsService.RecordInteractionAsync(activeCampaign.Id, type, userId);
+                }
+            }
         }
     }
 }
