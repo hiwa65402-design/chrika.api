@@ -7,6 +7,7 @@ namespace Chrika.Api.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
+        // DbSet ـە کۆنەکان
         public DbSet<User> Users { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<Comment> Comments { get; set; }
@@ -20,22 +21,34 @@ namespace Chrika.Api.Data
         public DbSet<AdInteraction> AdInteractions { get; set; }
         public DbSet<Share> Shares { get; set; }
 
-
-
-
+        // === DbSet ـە نوێیەکانی سیستەمی گرووپ ===
+        public DbSet<Group> Groups { get; set; }
+        public DbSet<GroupMember> GroupMembers { get; set; }
+        public DbSet<GroupFollower> GroupFollowers { get; set; }
+        public DbSet<GroupPost> GroupPosts { get; set; }
+        public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // === کلیلە تێکەڵەکان (Composite Keys) ===
+            // --- پێناسەکردنی کلیلە تێکەڵەکان (Composite Keys) ---
             modelBuilder.Entity<Like>()
                 .HasKey(l => new { l.PostId, l.UserId });
 
             modelBuilder.Entity<Follow>()
                 .HasKey(f => new { f.FollowerId, f.FollowingId });
 
-            // === پەیوەندی Follow ===
+            // === زیادکرا: کلیلە نوێیەکانی گرووپ ===
+            modelBuilder.Entity<GroupMember>()
+                .HasKey(gm => new { gm.GroupId, gm.UserId });
+
+            modelBuilder.Entity<GroupFollower>()
+                .HasKey(gf => new { gf.GroupId, gf.UserId });
+
+            // --- پێناسەکردنی پەیوەندییەکان (Relationships) ---
+
+            // پەیوەندی Follow
             modelBuilder.Entity<Follow>()
                 .HasOne(f => f.Follower)
                 .WithMany(u => u.Followings)
@@ -48,7 +61,7 @@ namespace Chrika.Api.Data
                 .HasForeignKey(f => f.FollowingId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // === پەیوەندی Notification ===
+            // پەیوەندی Notification
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.User)
                 .WithMany()
@@ -61,30 +74,30 @@ namespace Chrika.Api.Data
                 .HasForeignKey(n => n.TriggeredByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ======================================================
-            // === START: چارەسەری هەڵە نوێیەکە لێرەدایە ===
-            // ======================================================
-
-            // 1. پەیوەندی نێوان Post و Comment
+            // پەیوەندی Post و Comment
             modelBuilder.Entity<Comment>()
-                .HasOne(c => c.Post) // هەر کۆمێنتێک یەک پۆستی هەیە
-                .WithMany(p => p.Comments) // هەر پۆستێک چەندین کۆمێنتی هەیە
-                .HasForeignKey(c => c.PostId) // کلیلی بیانی ستوونی PostId ـە
-                .OnDelete(DeleteBehavior.Cascade); // ئەگەر پۆستێک سڕایەوە، هەموو کۆمێنتەکانیشی بسڕەوە
+                .HasOne(c => c.Post)
+                .WithMany(p => p.Comments)
+                .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // 2. پەیوەندی نێوان Post و Like
+            // پەیوەندی Post و Like
             modelBuilder.Entity<Like>()
-                .HasOne(l => l.Post) // هەر لایکێک بۆ یەک پۆستە
-                .WithMany(p => p.Likes) // هەر پۆستێک چەندین لایکی هەیە
-                .HasForeignKey(l => l.PostId) // کلیلی بیانی ستوونی PostId ـە
-                .OnDelete(DeleteBehavior.Cascade); // ئەگەر پۆستێک سڕایەوە، هەموو لایکەکانیشی بسڕەوە
+                .HasOne(l => l.Post)
+                .WithMany(p => p.Likes)
+                .HasForeignKey(l => l.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-          modelBuilder.Entity<AdCampaign>()
-                .OwnsOne(c => c.Audience); //بۆ سپۆنسەرە 
+            // --- پێناسەکردنی تایبەتمەندییەکان (Properties) ---
 
-            // ======================================================
-            // === END: کۆتایی چارەسەرەکە ===
-            // ======================================================
+            // بۆ سپۆنسەر
+            modelBuilder.Entity<AdCampaign>()
+                .OwnsOne(c => c.Audience);
+
+            // === زیادکرا: دڵنیابوونەوە لەوەی ناوی بەکارهێنەری گرووپ تاکە ===
+            modelBuilder.Entity<Group>()
+                .HasIndex(g => g.Username)
+                .IsUnique();
         }
     }
 }
