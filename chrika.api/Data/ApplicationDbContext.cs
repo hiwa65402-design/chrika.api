@@ -18,6 +18,8 @@ namespace Chrika.Api.Data
         public DbSet<AdCampaign> AdCampaigns { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<AdInteraction> AdInteractions { get; set; }
+        public DbSet<Share> Shares { get; set; }
+
 
 
 

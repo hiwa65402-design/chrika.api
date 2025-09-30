@@ -15,6 +15,8 @@
         public string? UserProfilePicture { get;  set; }
         public bool IsLikedByCurrentUser { get;  set; }
         public int AdCampaignId { get;  set; }
+        public int SharesCount { get; set; } 
+
     }
 
     // ئەمە بۆ وەرگرتنی زانیاری لە کاتی دروستکردنی پۆستی نوێ

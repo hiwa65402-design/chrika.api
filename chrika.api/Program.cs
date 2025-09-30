@@ -34,6 +34,7 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IShareService, ShareService>();
 
 
 

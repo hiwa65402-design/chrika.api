@@ -10,10 +10,13 @@ using System.Threading.Tasks;
 public class PostsController : ControllerBase
 {
     private readonly IPostService _postService;
+    private readonly IShareService _shareService;
 
-    public PostsController(IPostService postService)
+    public PostsController(IPostService postService, IShareService shareService)
     {
         _postService = postService;
+        _shareService = shareService;
+
     }
     //[HttpGet("feed")]
     //[Authorize] // تەنها بەکارهێنەری لۆگینبوو دەتوانێت Feed ـی خۆی ببینێت
