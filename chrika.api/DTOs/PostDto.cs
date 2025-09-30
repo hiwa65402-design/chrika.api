@@ -15,7 +15,9 @@
         public string? UserProfilePicture { get;  set; }
         public bool IsLikedByCurrentUser { get;  set; }
         public int AdCampaignId { get;  set; }
-        public int SharesCount { get; set; } 
+        public int SharesCount { get; set; }
+        public bool IsSharedByCurrentUser { get; set; } 
+
 
     }
 
