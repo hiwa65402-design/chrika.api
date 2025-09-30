@@ -16,6 +16,8 @@ namespace Chrika.Api.Data
         public DbSet<Page> Pages { get; set; }
         public DbSet<PagePost> PagePosts { get; set; }
         public DbSet<AdCampaign> AdCampaigns { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
+
 
 
 

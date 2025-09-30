@@ -125,4 +125,38 @@ public class PagesController : ControllerBase
         return Ok(pagePostDto);
     }
 
+    // PUT: api/pages/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdatePage(int id, [FromBody] UpdatePageDto updateDto)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        var page = await _context.Pages.FindAsync(id);
+
+        if (page == null)
+        {
+            return NotFound();
+        }
+
+        // پشکنینی خاوەندارێتی
+        if (page.OwnerId != userId)
+        {
+            return Forbid();
+        }
+
+        // نوێکردنەوەی ئەو زانیاریانەی کە نێردراون
+        page.Name = updateDto.Name ?? page.Name;
+        page.Description = updateDto.Description ?? page.Description;
+        page.Bio = updateDto.Bio ?? page.Bio;
+        page.PhoneNumber = updateDto.PhoneNumber ?? page.PhoneNumber;
+        page.WhatsAppNumber = updateDto.WhatsAppNumber ?? page.WhatsAppNumber;
+        page.WebsiteUrl = updateDto.WebsiteUrl ?? page.WebsiteUrl;
+        page.Location = updateDto.Location ?? page.Location;
+        page.Category = updateDto.Category ?? page.Category;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent(); // 204 No Content وەڵامێکی ستانداردە بۆ نوێکردنەوەی سەرکەوتوو
+    }
+
 }
