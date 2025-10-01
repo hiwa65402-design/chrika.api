@@ -74,28 +74,40 @@ namespace Chrika.Api.Models // یان Chrika.Api.Entities
 
     public class Comment
     {
-        public int Id { get; set; } // کۆمێنت Id ـی خۆی هەیە
-        public string Content { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public bool IsActive { get; set; } = true;
+        public int Id { get; set; }
+        public string? Content { get; set; }
 
-        // === پەیوەندییەکان ===
-        public int PostId { get; set; }
+        // === گۆڕانکارییەکان لێرەدایە ===
+        // کلیلە بیانییەکان (Foreign Keys)
+        public int? PostId { get; set; } // Nullable
         public virtual Post? Post { get; set; }
 
+        public int? GroupPostId { get; set; } // Nullable
+        public virtual GroupPost? GroupPost { get; set; }
+
+        // پەیوەندی لەگەڵ بەکارهێنەر
         public int UserId { get; set; }
-        public virtual User? User { get; set; }
+        public virtual User? User { get; set; } // Non-nullable
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class Like
     {
-        // === ڕاستکراوە: Id لابرا و Composite Key بەکارهێنرا ===
-        public int PostId { get; set; }
-        public int UserId { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public int Id { get; set; }
 
+        // کلیلە بیانییەکان (Foreign Keys)
+        public int? PostId { get; set; } // Nullable: لەوانەیە لایکی پۆستی ئاسایی بێت
         public virtual Post? Post { get; set; }
-        public virtual User? User { get; set; }
+
+        public int? GroupPostId { get; set; } // Nullable: لەوانەیە لایکی پۆستی گرووپ بێت
+        public virtual GroupPost? GroupPost { get; set; }
+
+        // پەیوەندی لەگەڵ بەکارهێنەر
+        public int UserId { get; set; }
+        public virtual User? User { get; set; } // Non-nullable
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class Follow

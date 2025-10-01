@@ -94,16 +94,15 @@ namespace chrika.api.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<int?>("GroupPostId")
+                        .HasColumnType("int");
 
-                    b.Property<int>("PostId")
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
@@ -111,11 +110,16 @@ namespace chrika.api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GroupPostId");
+
                     b.HasIndex("PostId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", t =>
+                        {
+                            t.HasCheckConstraint("CK_Comment_EntityType", "(`PostId` IS NOT NULL AND `GroupPostId` IS NULL) OR (`PostId` IS NULL AND `GroupPostId` IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Chrika.Api.Models.Follow", b =>
@@ -307,20 +311,40 @@ namespace chrika.api.Migrations
 
             modelBuilder.Entity("Chrika.Api.Models.Like", b =>
                 {
-                    b.Property<int>("PostId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("GroupPostId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                    b.HasKey("Id");
 
-                    b.HasKey("PostId", "UserId");
+                    b.HasIndex("GroupPostId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("PostId");
 
-                    b.ToTable("Likes");
+                    b.HasIndex("UserId", "GroupPostId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "PostId")
+                        .IsUnique();
+
+                    b.ToTable("Likes", t =>
+                        {
+                            t.HasCheckConstraint("CK_Like_EntityType", "(`PostId` IS NOT NULL AND `GroupPostId` IS NULL) OR (`PostId` IS NULL AND `GroupPostId` IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Chrika.Api.Models.Notification", b =>
@@ -675,17 +699,23 @@ namespace chrika.api.Migrations
 
             modelBuilder.Entity("Chrika.Api.Models.Comment", b =>
                 {
+                    b.HasOne("Chrika.Api.Models.GroupPost", "GroupPost")
+                        .WithMany()
+                        .HasForeignKey("GroupPostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Chrika.Api.Models.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Chrika.Api.Models.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("GroupPost");
 
                     b.Navigation("Post");
 
@@ -800,17 +830,23 @@ namespace chrika.api.Migrations
 
             modelBuilder.Entity("Chrika.Api.Models.Like", b =>
                 {
+                    b.HasOne("Chrika.Api.Models.GroupPost", "GroupPost")
+                        .WithMany()
+                        .HasForeignKey("GroupPostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Chrika.Api.Models.Post", "Post")
                         .WithMany("Likes")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Chrika.Api.Models.User", "User")
                         .WithMany("Likes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("GroupPost");
 
                     b.Navigation("Post");
 
