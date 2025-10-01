@@ -38,6 +38,13 @@ builder.Services.AddScoped<IShareService, ShareService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IGroupPostService, GroupPostService>();
 builder.Services.AddScoped<IVideoService, VideoService>();
+builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // ئەمە وا دەکات کە Enumـەکان وەک وشە مامەڵەیان لەگەڵ بکرێت نەک ژمارە
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 
 
