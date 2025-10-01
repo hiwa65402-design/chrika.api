@@ -27,6 +27,8 @@ namespace Chrika.Api.Data
         public DbSet<GroupFollower> GroupFollowers { get; set; }
         public DbSet<GroupPost> GroupPosts { get; set; }
         public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
         [Obsolete]
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -131,6 +133,22 @@ namespace Chrika.Api.Data
 
             modelBuilder.Entity<Comment>()
                 .HasCheckConstraint("CK_Comment_EntityType", "(`PostId` IS NOT NULL AND `GroupPostId` IS NULL) OR (`PostId` IS NULL AND `GroupPostId` IS NOT NULL)");
+
+
+
+
+            //bo Chating
+            // دڵنیابوونەوە لەوەی گفتوگۆی دووبارە دروست نابێت
+            modelBuilder.Entity<Conversation>()
+                .HasIndex(c => new { c.Participant1Id, c.Participant2Id })
+                .IsUnique();
+
+            // ڕێکخستنی پەیوەندی Forwarded Message
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.ForwardedMessage)
+                .WithMany()
+                .HasForeignKey(m => m.ForwardedMessageId)
+                .OnDelete(DeleteBehavior.SetNull); // ئەگەر نامە ئەسڵییەکە سڕایەوە، forwardـەکە نەسڕێتەوە
         }
     }
 }

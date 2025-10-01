@@ -5,7 +5,7 @@ using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; // <-- زیادکرا بۆ Swagger
+using Microsoft.OpenApi.Models; 
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,7 +39,7 @@ builder.Services.AddScoped<IShareService, ShareService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IGroupPostService, GroupPostService>();
 builder.Services.AddScoped<IVideoService, VideoService>();
-
+builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddControllers();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -129,8 +129,10 @@ app.UseStaticFiles();
 // گرنگ: ڕیزبەندی ئەم دووانە نابێت بگۆڕدرێت
 app.UseAuthentication(); // یەکەم: پشکنینی تۆکن
 app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
-app.MapHub<NotificationHub>("/notificationHub"); 
+app.MapHub<NotificationHub>("/notificationHub");
 
+
+app.MapHub<ChatHub>("/chatHub");
 app.MapControllers();
 
 app.Run();
