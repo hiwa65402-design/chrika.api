@@ -125,12 +125,18 @@ namespace Chrika.Api.Services
                 conversation = new Conversation
                 {
                     Participant1Id = senderId,
-                    Participant2Id = receiverId
+                    Participant2Id = receiverId,
+                    LastMessageAt = System.DateTime.UtcNow // کاتی سەرەتایی دادەنێین
                 };
                 _context.Conversations.Add(conversation);
+
+                // === گۆڕانکارییەکە لێرەدایە ===
+                // پێویستە یەکەمجار پاشەکەوتی بکەین بۆ ئەوەی conversation.Id وەربگرین
+                await _context.SaveChangesAsync();
             }
 
-            // ناردنی نامەکە بە بەکارهێنانی فانکشنەکەی سەرەوە
+            // ئێستا کە دڵنیاین conversation.Id بوونی هەیە،
+            // نامەکە دەنێرین بە بەکارهێنانی فانکشنەکەی تر.
             return await SendMessageAsync(conversation.Id, senderId, dto);
         }
 
