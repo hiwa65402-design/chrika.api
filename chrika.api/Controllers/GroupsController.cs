@@ -160,6 +160,7 @@ public class GroupsController : ControllerBase
         return Ok("Your request to join the group has been sent.");
     }
 
+
     // GET: api/groups/{id}/join-requests
     [HttpGet("{id}/join-requests")]
     public async Task<ActionResult<IEnumerable<GroupJoinRequestDto>>> GetJoinRequests(int id)
@@ -169,11 +170,14 @@ public class GroupsController : ControllerBase
 
         if (requests == null)
         {
-            return Forbid("You do not have permission to view join requests for this group.");
+            // === گۆڕانکارییەکە لێرەدایە ===
+            return StatusCode(403, "You do not have permission to view join requests for this group.");
         }
 
         return Ok(requests);
     }
+
+    // ...
 
     // POST: api/groups/requests/{requestId}/process
     [HttpPost("requests/{requestId}/process")]
