@@ -37,6 +37,7 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IShareService, ShareService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IGroupPostService, GroupPostService>();
+builder.Services.AddScoped<IVideoService, VideoService>();
 
 
 
