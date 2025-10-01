@@ -23,4 +23,12 @@
         public string? ContentSnippet { get; set; } // پارچەیەکی کورت لە ناوەڕۆکی پۆستەکە
         public string? AuthorUsername { get; set; }
     }
+    public class GroupSearchResultDto
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public string? Username { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public int MemberCount { get; set; }
+    }
 }
