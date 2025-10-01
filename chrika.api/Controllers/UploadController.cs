@@ -1,11 +1,10 @@
 ﻿// Controllers/UploadController.cs
-
 using Chrika.Api.Models;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System; // <-- گرنگ: ئەمە زیاد بکە
+using System;
 using System.Threading.Tasks;
 
 namespace Chrika.Api.Controllers
@@ -22,27 +21,14 @@ namespace Chrika.Api.Controllers
             _fileService = fileService;
         }
 
-        // === گۆڕانکارییەکە لێرەدایە ===
         [HttpPost]
-        [Consumes("multipart/form-data")]
+        [Consumes("multipart/form-data")] // ئەمە بۆ دڵنیایی با بمێنێتەوە
         public async Task<IActionResult> UploadFile([FromForm] IFormFile file, [FromForm] string fileType)
         {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("No file uploaded.");
-            }
+            if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
+            if (!Enum.TryParse<FileType>(fileType, true, out var fileTypeEnum)) return BadRequest("Invalid fileType specified.");
 
-            // 1. گۆڕینی string بۆ enum
-            // Enum.TryParse(string, ignoreCase, out result)
-            if (!Enum.TryParse<FileType>(fileType, true, out var fileTypeEnum))
-            {
-                // ئەگەر بەکارهێنەر stringـێکی هەڵەی ناردبوو
-                return BadRequest("Invalid fileType specified.");
-            }
-
-            // 2. فایلەکە پاشەکەوت دەکەین بە بەکارهێنانی enumـە گۆڕدراوەکە
             var fileUrl = await _fileService.SaveFileAsync(file, fileTypeEnum);
-
             return Ok(new { url = fileUrl });
         }
     }
