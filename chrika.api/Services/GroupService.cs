@@ -482,5 +482,45 @@ namespace Chrika.Api.Services
             return true;
         }
 
+
+        public async Task<IEnumerable<GroupMemberDto>?> GetGroupMembersAsync(int groupId, int? currentUserId)
+        {
+            // 1. دۆزینەوەی گرووپ
+            var group = await _context.Groups.FindAsync(groupId);
+            if (group == null)
+            {
+                return new List<GroupMemberDto>();
+            }
+
+            // 2. پشکنینی دەسەڵات بۆ گرووپی Private
+            if (group.Type == GroupType.Private)
+            {
+                // === گۆڕانکارییەکە لێرەدایە ===
+                // ئەگەر بەکارهێنەر لۆگینی نەکردبێت (currentUserId is null)
+                // یان ئەگەر لۆگینی کردبێت بەڵام ئەندام نەبێت
+                if (currentUserId == null || !await _context.GroupMembers.AnyAsync(m => m.GroupId == groupId && m.UserId == currentUserId.Value))
+                {
+                    return null; // ڕێگەی پێنادرێت
+                }
+            }
+
+            // 3. هێنانی لیستی ئەندامان
+            return await _context.GroupMembers
+                .Where(m => m.GroupId == groupId)
+                .Include(m => m.User)
+                .OrderBy(m => m.Role)
+                .ThenBy(m => m.JoinedAt)
+                .Select(m => new GroupMemberDto
+                {
+                    UserId = m.UserId,
+                    Username = m.User.Username,
+                    ProfilePictureUrl = m.User.ProfilePicture,
+                    Role = m.Role.ToString(),
+                    JoinedAt = m.JoinedAt
+                })
+                .ToListAsync();
+        }
+
+
     }
 }

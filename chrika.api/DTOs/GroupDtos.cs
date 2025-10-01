@@ -69,4 +69,12 @@ namespace Chrika.Api.DTOs // یان Dtos
         [Required]
         public bool Accept { get; set; } // true = قبوڵکرا، false = ڕەتکرایەوە
     }
+    public class GroupMemberDto
+    {
+        public int UserId { get; set; }
+        public string? Username { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public string? Role { get; set; } // "Owner", "Admin", "Member"
+        public DateTime JoinedAt { get; set; }
+    }
 }

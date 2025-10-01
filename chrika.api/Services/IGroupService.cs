@@ -24,5 +24,7 @@ namespace Chrika.Api.Services
         Task<bool> RequestToJoinGroupAsync(int groupId, int userId);
         Task<IEnumerable<GroupJoinRequestDto>> GetJoinRequestsAsync(int groupId, int currentUserId);
         Task<bool> ProcessJoinRequestAsync(int requestId, bool accept, int currentUserId);
+        Task<IEnumerable<GroupMemberDto>?> GetGroupMembersAsync(int groupId, int? currentUserId);
+
     }
 }

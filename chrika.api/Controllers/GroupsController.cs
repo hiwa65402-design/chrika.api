@@ -194,4 +194,25 @@ public class GroupsController : ControllerBase
         return Ok(dto.Accept ? "Request accepted and user added to the group." : "Request rejected.");
     }
 
+
+    // GET: api/groups/{id}/members
+    // GET: api/groups/{id}/members
+    [HttpGet("{id}/members")]
+    public async Task<ActionResult<IEnumerable<GroupMemberDto>>> GetGroupMembers(int id)
+    {
+        // بۆ گرووپی Public، پێویست بە لۆگین نییە، بۆیە userId دەتوانێت null بێت
+        var userId = User.Identity.IsAuthenticated ? (int?)User.GetUserId() : null;
+
+        // پێویستە فانکشنی سێرڤسەکەش بگۆڕین بۆ ئەوەی int? وەربگرێت
+        var members = await _groupService.GetGroupMembersAsync(id, userId);
+
+        if (members == null)
+        {
+            return StatusCode(403, "You do not have permission to view the members of this private group.");
+        }
+
+        return Ok(members);
+    }
+
+
 }
