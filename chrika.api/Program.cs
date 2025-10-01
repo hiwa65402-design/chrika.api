@@ -122,13 +122,22 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
-
+// وا دەکات فایلە ستاتیکەکانی ناو wwwroot (وەک وێنە و ڤیدیۆ) بەردەست بن
+app.UseStaticFiles();
 // گرنگ: ڕیزبەندی ئەم دووانە نابێت بگۆڕدرێت
 app.UseAuthentication(); // یەکەم: پشکنینی تۆکن
 app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
 app.UseStaticFiles(); // بۆ پیشاندانی فایلەکانی ناو wwwroot
 
 app.MapControllers();
+
+app.Run();
+
+
+
+
+
+
 //using (var scope = app.Services.CreateScope())
 //{
 //    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -140,6 +149,3 @@ app.MapControllers();
 //    catch (Exception ex) { Console.WriteLine($"ERROR: {ex.Message}"); }
 //}
 
-
-// --- Section 4: Run the Application ---
-app.Run();

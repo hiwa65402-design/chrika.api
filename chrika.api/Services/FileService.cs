@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿// Services/FileService.cs
+
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
@@ -17,35 +19,37 @@ namespace Chrika.Api.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<string> SaveProfilePictureAsync(IFormFile imageFile)
+        public async Task<string> SaveFileAsync(IFormFile file, string subfolder)
         {
-            if (imageFile == null || imageFile.Length == 0)
+            if (file == null || file.Length == 0)
             {
                 throw new ArgumentException("File is empty or null.");
             }
 
-            // 1. ڕێڕەوی خەزنکردن دیاری بکە
-            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "profiles");
-            if (!Directory.Exists(uploadsFolder))
+            // 1. ڕێڕەوی خەزنکردن دیاری بکە بەپێی ژێر-فۆڵدەرەکە
+            // بۆ نموونە: wwwroot/uploads/images
+            var targetFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", subfolder);
+            if (!Directory.Exists(targetFolder))
             {
-                Directory.CreateDirectory(uploadsFolder);
+                Directory.CreateDirectory(targetFolder);
             }
 
             // 2. ناوێکی بێهاوتا بۆ فایلەکە دروست بکە
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            var uniqueFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString().Substring(0, 8)}{Path.GetExtension(file.FileName)}";
+            var filePath = Path.Combine(targetFolder, uniqueFileName);
 
             // 3. فایلەکە خەزن بکە
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
-                await imageFile.CopyToAsync(fileStream);
+                await file.CopyToAsync(fileStream);
             }
 
-            // 4. ناونیشانی گشتی (URL) ـی فایلەکە دروست بکە
+            // 4. ناونیشانی گشتی (URL)ـی فایلەکە دروست بکە
             var request = _httpContextAccessor.HttpContext.Request;
-            var url = $"{request.Scheme}://{request.Host}/images/profiles/{uniqueFileName}";
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            var fileUrl = $"{baseUrl}/uploads/{subfolder}/{uniqueFileName}";
 
-            return url;
+            return fileUrl;
         }
     }
 }

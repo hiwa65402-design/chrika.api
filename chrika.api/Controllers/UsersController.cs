@@ -1,5 +1,6 @@
 ﻿using Chrika.Api.Dtos;
 using Chrika.Api.DTOs;
+using Chrika.Api.Helpers;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -154,6 +155,7 @@ namespace Chrika.Api.Controllers
 
             return Ok("Password changed successfully.");
         }
+
         [HttpPost("profile-picture")]
         [Authorize]
         public async Task<IActionResult> UploadProfilePicture(IFormFile file)
@@ -161,12 +163,12 @@ namespace Chrika.Api.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userId = User.GetUserId();
 
-            // 1. وێنەکە خەزن بکە و URL ـەکەی وەربگرە
-            var imageUrl = await _fileService.SaveProfilePictureAsync(file);
+            // === گۆڕانکارییەکە لێرەدایە ===
+            // ئێستا فانکشنە گشتییەکە بەکاردەهێنین و پێی دەڵێین لە فۆڵدەری 'profiles' هەڵیبگرە
+            var imageUrl = await _fileService.SaveFileAsync(file, "profiles");
 
-            // 2. URL ـەکە لە داتابەیس بۆ بەکارهێنەرەکە خەزن بکە
             var success = await _userService.UpdateProfilePictureAsync(userId, imageUrl);
 
             if (!success)
@@ -174,6 +176,6 @@ namespace Chrika.Api.Controllers
 
             return Ok(new { profilePictureUrl = imageUrl });
         }
-    
-}
+
+    }
 }
