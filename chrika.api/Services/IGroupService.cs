@@ -15,5 +15,7 @@ namespace Chrika.Api.Services
         Task<IEnumerable<GroupDto>> GetAllPublicGroupsAsync();
         Task<bool> JoinGroupAsync(int groupId, int userId);
         Task<bool> LeaveGroupAsync(int groupId, int userId);
+        Task<bool> FollowGroupAsync(int groupId, int userId);
+        Task<bool> UnfollowGroupAsync(int groupId, int userId);
     }
 }

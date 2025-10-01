@@ -188,5 +188,56 @@ namespace Chrika.Api.Services
             return true;
         }
 
+      
+        public async Task<bool> FollowGroupAsync(int groupId, int userId)
+        {
+            // 1. پشکنینی بوونی گرووپ
+            var groupExists = await _context.Groups.AnyAsync(g => g.Id == groupId && g.Type == GroupType.Public);
+            if (!groupExists)
+            {
+                return false; // گرووپەکە بوونی نییە یان گشتی نییە
+            }
+
+            // 2. پشکنینی ئەوەی کە ئایا بەکارهێنەرەکە پێشتر فۆڵۆی کردووە
+            var isAlreadyFollowing = await _context.GroupFollowers
+                .AnyAsync(f => f.GroupId == groupId && f.UserId == userId);
+
+            if (isAlreadyFollowing)
+            {
+                return true; // پێشتر فۆڵۆی کردووە
+            }
+
+            // 3. زیادکردنی فۆڵۆوەری نوێ
+            var newFollower = new GroupFollower
+            {
+                GroupId = groupId,
+                UserId = userId
+            };
+
+            _context.GroupFollowers.Add(newFollower);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> UnfollowGroupAsync(int groupId, int userId)
+        {
+            // 1. دۆزینەوەی تۆماری فۆڵۆکردن
+            var follow = await _context.GroupFollowers
+                .FirstOrDefaultAsync(f => f.GroupId == groupId && f.UserId == userId);
+
+            if (follow == null)
+            {
+                return false; // ئەگەر بەکارهێنەرەکە فۆڵۆی نەکردبێت
+            }
+
+            // 2. سڕینەوەی تۆماری فۆڵۆکردن
+            _context.GroupFollowers.Remove(follow);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+
     }
 }

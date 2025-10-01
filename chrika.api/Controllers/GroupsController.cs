@@ -90,4 +90,35 @@ public class GroupsController : ControllerBase
         return Ok("Successfully left the group.");
     }
 
+
+    // POST: api/groups/5/follow
+    [HttpPost("{id}/follow")]
+    public async Task<IActionResult> FollowGroup(int id)
+    {
+        var userId = User.GetUserId();
+        var success = await _groupService.FollowGroupAsync(id, userId);
+
+        if (!success)
+        {
+            return BadRequest("Unable to follow this group. It might be private or does not exist.");
+        }
+
+        return Ok("Successfully followed the group.");
+    }
+
+    // POST: api/groups/5/unfollow
+    [HttpPost("{id}/unfollow")]
+    public async Task<IActionResult> UnfollowGroup(int id)
+    {
+        var userId = User.GetUserId();
+        var success = await _groupService.UnfollowGroupAsync(id, userId);
+
+        if (!success)
+        {
+            return BadRequest("You are not following this group.");
+        }
+
+        return Ok("Successfully unfollowed the group.");
+    }
+
 }
