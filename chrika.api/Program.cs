@@ -38,6 +38,7 @@ builder.Services.AddScoped<IShareService, ShareService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IGroupPostService, GroupPostService>();
 builder.Services.AddScoped<IVideoService, VideoService>();
+
 builder.Services.AddControllers();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -127,7 +128,6 @@ app.UseStaticFiles();
 // گرنگ: ڕیزبەندی ئەم دووانە نابێت بگۆڕدرێت
 app.UseAuthentication(); // یەکەم: پشکنینی تۆکن
 app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
-app.UseStaticFiles(); // بۆ پیشاندانی فایلەکانی ناو wwwroot
 
 app.MapControllers();
 
