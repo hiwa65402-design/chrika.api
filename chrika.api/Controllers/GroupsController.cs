@@ -55,4 +55,39 @@ public class GroupsController : ControllerBase
         var groups = await _groupService.GetAllPublicGroupsAsync();
         return Ok(groups);
     }
+
+
+
+   
+
+    // POST: api/groups/5/join
+    [HttpPost("{id}/join")]
+    public async Task<IActionResult> JoinGroup(int id)
+    {
+        var userId = User.GetUserId();
+        var success = await _groupService.JoinGroupAsync(id, userId);
+
+        if (!success)
+        {
+            return BadRequest("Unable to join this group. It might be private or does not exist.");
+        }
+
+        return Ok("Successfully joined the group.");
+    }
+
+    // POST: api/groups/5/leave
+    [HttpPost("{id}/leave")]
+    public async Task<IActionResult> LeaveGroup(int id)
+    {
+        var userId = User.GetUserId();
+        var success = await _groupService.LeaveGroupAsync(id, userId);
+
+        if (!success)
+        {
+            return BadRequest("Unable to leave this group. You might not be a member or you are the owner.");
+        }
+
+        return Ok("Successfully left the group.");
+    }
+
 }

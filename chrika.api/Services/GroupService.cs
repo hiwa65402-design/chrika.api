@@ -125,5 +125,68 @@ namespace Chrika.Api.Services
                 })
                 .ToListAsync();
         }
+  
+
+        public async Task<bool> JoinGroupAsync(int groupId, int userId)
+        {
+            // 1. پشکنینی بوونی گرووپ
+            var group = await _context.Groups.FindAsync(groupId);
+            if (group == null || group.Type != GroupType.Public)
+            {
+                // یان گرووپەکە بوونی نییە، یان گشتی نییە
+                return false;
+            }
+
+            // 2. پشکنینی ئەوەی کە ئایا بەکارهێنەرەکە پێشتر ئەندامە
+            var isAlreadyMember = await _context.GroupMembers
+                .AnyAsync(m => m.GroupId == groupId && m.UserId == userId);
+
+            if (isAlreadyMember)
+            {
+                // پێشتر ئەندامە، پێویست بە هیچ ناکات
+                return true;
+            }
+
+            // 3. زیادکردنی بەکارهێنەر وەک ئەندامی نوێ
+            var newMember = new GroupMember
+            {
+                GroupId = groupId,
+                UserId = userId,
+                Role = GroupRole.Member // ڕۆڵی ئەندامی ئاسایی
+            };
+
+            _context.GroupMembers.Add(newMember);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> LeaveGroupAsync(int groupId, int userId)
+        {
+            // 1. دۆزینەوەی تۆماری ئەندامێتی
+            var membership = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId);
+
+            if (membership == null)
+            {
+                // ئەگەر بەکارهێنەرەکە ئەندام نەبێت، هیچ ناکەین
+                return false;
+            }
+
+            // 2. پشکنینی ئەوەی کە ئایا خاوەنی گرووپە
+            if (membership.Role == GroupRole.Owner)
+            {
+                // خاوەنی گرووپ ناتوانێت گرووپەکەی جێبهێڵێت، دەبێت بیسڕێتەوە
+                // ئەمە بۆ دواتر چارەسەر دەکەین
+                return false;
+            }
+
+            // 3. سڕینەوەی تۆماری ئەندامێتی
+            _context.GroupMembers.Remove(membership);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
     }
-    }
+}
