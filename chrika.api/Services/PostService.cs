@@ -126,47 +126,40 @@ namespace Chrika.Api.Services
                 }
             }
 
-            // --- 4. تێکەڵکردن و حیسابکردنی نمرە ---
+            // --- 4. تێکەڵکردنی هەموو شتەکان ---
             var combinedFeed = feedItems
                 .GroupBy(item => new { item.Id, item.ItemType })
                 .Select(g => g.First())
-                .ToList();
+                .ToList(); // لێرەدا ToList() دەکەین بۆ ئەوەی بتوانین نمرە حیساب بکەین
 
-            // === گۆڕانکارییەکە لێرەدایە ===
-            var scoredFeed = combinedFeed.Select(item =>
+            // === گۆڕانکارییەکە لێرەدایە: حیسابکردنی نمرە ===
+            foreach (var item in combinedFeed)
             {
-                var ageInHours = (System.DateTime.UtcNow - item.CreatedAt).TotalHours;
-                var score = (item.LikesCount * 1.0) + (item.CommentsCount * 2.0);
+                var hoursAgo = (DateTime.UtcNow - item.CreatedAt).TotalHours;
+                item.Score = (item.LikesCount * 2) + (item.CommentsCount * 3) - hoursAgo;
+            }
 
-                // دڵنیابە کە ageInHours + 2 سفر نییە بۆ ئەوەی تووشی هەڵەی دابەشکردن بەسەر سفردا نەبین
-                var finalScore = score / System.Math.Pow(ageInHours + 2, 1.8);
+            // === ڕیزکردنی نوێ: بەپێی نمرە ===
+            combinedFeed = combinedFeed.OrderByDescending(item => item.Score).ToList();
 
-                return new { Item = item, Score = finalScore };
-            })
-            .OrderByDescending(x => x.Score) // ڕیزکردن بەپێی نمرە
-            .Select(x => x.Item)
-            .ToList();
-
-
-            // --- 5. دانانی ڕیکلامەکان ---
+            // دانانی ڕیکلامەکان (وەک پێشوو)
             int adIndex = 0;
-            for (int i = 5; i < scoredFeed.Count; i += 6)
+            for (int i = 5; i < combinedFeed.Count; i += 6)
             {
                 if (adIndex < adItems.Count)
                 {
-                    scoredFeed.Insert(i, adItems[adIndex]);
+                    combinedFeed.Insert(i, adItems[adIndex]);
                     adIndex++;
                 }
             }
             while (adIndex < adItems.Count)
             {
-                scoredFeed.Add(adItems[adIndex]);
+                combinedFeed.Add(adItems[adIndex]);
                 adIndex++;
             }
 
-            return scoredFeed;
+            return combinedFeed;
         }
-
         // =================================================================
         // === فانکشنە کۆنەکان کە هێشتا پێویستن بۆ کارکردنی PostsController ===
         // =================================================================

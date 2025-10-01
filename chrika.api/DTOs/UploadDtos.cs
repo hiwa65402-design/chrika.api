@@ -14,5 +14,7 @@ namespace Chrika.Api.DTOs
         // جۆری فایلەکە
         [FromForm]
         public FileType FileType { get; set; }
+        public double Score { get; set; } // نمرەی پۆستەکە
+
     }
 }

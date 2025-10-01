@@ -34,5 +34,7 @@ namespace Chrika.Api.DTOs
         public bool IsLikedByCurrentUser { get; set; }
         public bool IsSponsored { get; set; } = false;
         public int? AdCampaignId { get; set; }
+        public double Score { get; set; }
+
     }
 }
