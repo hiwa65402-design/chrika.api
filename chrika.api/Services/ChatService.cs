@@ -81,18 +81,22 @@ namespace Chrika.Api.Services
             return messages;
         }
 
-        // === 3. ناردنی نامە بۆ گفتوگۆیەکی پێشتر دروستکراو ===
+        
+        // === گۆڕانکاری لەم فانکشنەدایە ===
         public async Task<MessageDto> SendMessageAsync(int conversationId, int senderId, SendMessageDto dto)
         {
             var conversation = await _context.Conversations.FindAsync(conversationId);
             if (conversation == null) return null;
 
+            // دروستکردنی نامەی نوێ بەپێی جۆرەکەی
             var message = new Message
             {
                 ConversationId = conversationId,
                 SenderId = senderId,
-                Content = dto.Content,
-                Type = MessageType.Text
+                Type = dto.Type,
+                Content = dto.Content, // بۆ Text
+                MediaUrl = dto.MediaUrl, // بۆ میدیا
+                MediaDuration = dto.MediaDuration // بۆ میدیا
             };
 
             // نوێکردنەوەی کاتی دوایین نامە

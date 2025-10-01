@@ -5,7 +5,9 @@ using Chrika.Api.Helpers;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic.FileIO;
 using System.Threading.Tasks;
+using Chrika.Api.Models; 
 
 namespace Chrika.Api.Controllers
 {
@@ -16,9 +18,11 @@ namespace Chrika.Api.Controllers
     {
         private readonly IChatService _chatService;
 
-        public ChatController(IChatService chatService)
+
+        public ChatController(IChatService chatService, IFileService fileService)
         {
             _chatService = chatService;
+
         }
 
         // GET: /api/chat/conversations
@@ -60,5 +64,21 @@ namespace Chrika.Api.Controllers
             var message = await _chatService.StartOrGetConversationAndSendMessageAsync(senderId, receiverId, dto);
             return Ok(message);
         }
+        //// === Endpointـی نوێ بۆ Upload کردنی فایلی چات ===
+        //// POST: /api/chat/upload-file
+        //[HttpPost("upload-file")]
+        //public async Task<IActionResult> UploadChatFile([FromForm] IFormFile file, [FromForm] FileType fileType)
+        //{
+        //    if (file == null || file.Length == 0)
+        //    {
+        //        return BadRequest("No file uploaded.");
+        //    }
+
+        //    // فایلەکە پاشەکەوت دەکەین و URLـەکەی وەردەگرین
+        //    var fileUrl = await _fileService.SaveFileAsync(file, fileType);
+
+        //    // تەنها URLـەکە دەگەڕێنینەوە
+        //    return Ok(new { url = fileUrl });
+        //}
     }
 }

@@ -1,5 +1,5 @@
 ﻿// Services/FileService.cs
-
+using Chrika.Api.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -19,23 +19,25 @@ namespace Chrika.Api.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<string> SaveFileAsync(IFormFile file, string subfolder)
+        // === فانکشنە نوێ و گشتگیرەکە ===
+        public async Task<string> SaveFileAsync(IFormFile file, FileType fileType)
         {
             if (file == null || file.Length == 0)
             {
                 throw new ArgumentException("File is empty or null.");
             }
 
-            // 1. ڕێڕەوی خەزنکردن دیاری بکە بەپێی ژێر-فۆڵدەرەکە
-            // بۆ نموونە: wwwroot/uploads/images
+            // 1. دیاریکردنی فۆڵدەری ئامانج بەپێی جۆری فایل
+            string subfolder = GetSubfolderForFileType(fileType);
             var targetFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", subfolder);
+
             if (!Directory.Exists(targetFolder))
             {
                 Directory.CreateDirectory(targetFolder);
             }
 
             // 2. ناوێکی بێهاوتا بۆ فایلەکە دروست بکە
-            var uniqueFileName = $"{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString().Substring(0, 8)}{Path.GetExtension(file.FileName)}";
+            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var filePath = Path.Combine(targetFolder, uniqueFileName);
 
             // 3. فایلەکە خەزن بکە
@@ -50,6 +52,21 @@ namespace Chrika.Api.Services
             var fileUrl = $"{baseUrl}/uploads/{subfolder}/{uniqueFileName}";
 
             return fileUrl;
+        }
+
+        // فانکشنێکی یاریدەدەر بۆ وەرگرتنی ناوی فۆڵدەر
+        private string GetSubfolderForFileType(FileType fileType)
+        {
+            return fileType switch
+            {
+                FileType.ProfilePicture => "profiles",
+                FileType.PostImage => "posts/images",
+                FileType.PostVideo => "posts/videos",
+                FileType.ChatImage => "chat/images",
+                FileType.ChatVideo => "chat/videos",
+                FileType.ChatAudio => "chat/audios",
+                _ => "general" // بۆ هەر حاڵەتێکی تر
+            };
         }
     }
 }

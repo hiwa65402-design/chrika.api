@@ -1,6 +1,7 @@
 ﻿// DTOs/ChatDtos.cs
-using System;
 using Chrika.Api.Models; // بۆ MessageType
+using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Chrika.Api.DTOs
 {
@@ -33,9 +34,15 @@ namespace Chrika.Api.DTOs
         public MessageDto? ForwardedMessage { get; set; }
     }
 
-    // بۆ ناردنی نامەی نوێ
     public class SendMessageDto
     {
-        public string? Content { get; set; }
+        // یەکێک لەمانە دەبێت بوونی هەبێت
+        public string? Content { get; set; } // بۆ نامەی Text
+        public string? MediaUrl { get; set; } // بۆ نامەی Image, Video, Audio
+        public double? MediaDuration { get; set; } // بۆ Audio/Video
+
+        // جۆری نامەکە لە clientـەوە دیاری دەکرێت
+        [Required]
+        public MessageType Type { get; set; }
     }
 }
