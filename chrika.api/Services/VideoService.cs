@@ -23,7 +23,6 @@ namespace Chrika.Api.Services
         {
             // 1. هێنانی ڤیدیۆی پۆستە ئاساییەکان
             var userVideoPosts = _context.Posts
-                // تێبینی: ئەمە ڕێگەیەکی سادەیە، دواتر دەتوانین باشترینی بکەین
                 .Where(p => p.ImageUrl != null && (p.ImageUrl.EndsWith(".mp4") || p.ImageUrl.EndsWith(".mov")))
                 .Select(p => new VideoFeedItemDto
                 {
@@ -35,13 +34,8 @@ namespace Chrika.Api.Services
                     AuthorId = p.UserId,
                     AuthorUsername = p.User.Username,
                     AuthorProfilePicture = p.User.ProfilePicture,
-
-                    // === گۆڕانکارییەکە لێرەدایە ===
-                    // ئەم دوو پرۆپەرتییە لێرەدا بوونیان نییە، بۆیە null دادەنێین
                     GroupId = null,
                     GroupName = null,
-                    // =============================
-
                     LikesCount = _context.Likes.Count(l => l.PostId == p.Id),
                     CommentsCount = _context.Comments.Count(c => c.PostId == p.Id),
                     IsLikedByCurrentUser = userId.HasValue && _context.Likes.Any(l => l.PostId == p.Id && l.UserId == userId.Value)
@@ -60,11 +54,8 @@ namespace Chrika.Api.Services
                     AuthorId = gp.AuthorId,
                     AuthorUsername = gp.Author.Username,
                     AuthorProfilePicture = gp.Author.ProfilePicture,
-
-                    // ئەم دوو پرۆپەرتییە لێرەدا بوونیان هەیە
                     GroupId = gp.GroupId,
                     GroupName = gp.Group.Name,
-
                     LikesCount = _context.Likes.Count(l => l.GroupPostId == gp.Id),
                     CommentsCount = _context.Comments.Count(c => c.GroupPostId == gp.Id),
                     IsLikedByCurrentUser = userId.HasValue && _context.Likes.Any(l => l.GroupPostId == gp.Id && l.UserId == userId.Value)
@@ -73,12 +64,20 @@ namespace Chrika.Api.Services
             // 3. تێکەڵکردنی هەردوو جۆرەکە
             var allVideos = userVideoPosts.Concat(groupVideoPosts);
 
-            // 4. ڕیزکردن و لاپەڕەبەندکردن (Pagination)
-            return await allVideos
-                .OrderByDescending(v => v.CreatedAt)
+            // === گۆڕانکارییەکە لێرەدایە ===
+            // 4. ڕیزکردنی هەڕەمەکی و لاپەڕەبەندکردن
+            // یەکەمجار هەموو ڤیدیۆکان دەهێنینە ناو memory
+            var videoList = await allVideos.ToListAsync();
+
+            // پاشان بە شێوەیەکی هەڕەمەکی ڕیزیان دەکەین
+            var random = new System.Random();
+            var shuffledVideos = videoList.OrderBy(v => random.Next());
+
+            // لە کۆتاییدا، لاپەڕەبەندکردن جێبەجێ دەکەین
+            return shuffledVideos
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
         }
     }
 }

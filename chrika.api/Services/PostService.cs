@@ -25,6 +25,8 @@ namespace Chrika.Api.Services
         /// فانکشنی نوێ و گشتگیر بۆ دروستکردنی Feed.
         /// پۆستی کەسەکان، گرووپەکان، و ڕیکلامەکان تێکەڵ دەکات.
         /// </summary>
+     
+
         public async Task<IEnumerable<FeedItemDto>> GetUniversalFeedAsync(int? userId)
         {
             var feedItems = new List<FeedItemDto>();
@@ -124,30 +126,45 @@ namespace Chrika.Api.Services
                 }
             }
 
-            // --- 4. تێکەڵکردنی هەموو شتەکان ---
+            // --- 4. تێکەڵکردن و حیسابکردنی نمرە ---
             var combinedFeed = feedItems
                 .GroupBy(item => new { item.Id, item.ItemType })
                 .Select(g => g.First())
-                .OrderByDescending(item => item.CreatedAt)
                 .ToList();
 
-            // دانانی ڕیکلامەکان
+            // === گۆڕانکارییەکە لێرەدایە ===
+            var scoredFeed = combinedFeed.Select(item =>
+            {
+                var ageInHours = (System.DateTime.UtcNow - item.CreatedAt).TotalHours;
+                var score = (item.LikesCount * 1.0) + (item.CommentsCount * 2.0);
+
+                // دڵنیابە کە ageInHours + 2 سفر نییە بۆ ئەوەی تووشی هەڵەی دابەشکردن بەسەر سفردا نەبین
+                var finalScore = score / System.Math.Pow(ageInHours + 2, 1.8);
+
+                return new { Item = item, Score = finalScore };
+            })
+            .OrderByDescending(x => x.Score) // ڕیزکردن بەپێی نمرە
+            .Select(x => x.Item)
+            .ToList();
+
+
+            // --- 5. دانانی ڕیکلامەکان ---
             int adIndex = 0;
-            for (int i = 5; i < combinedFeed.Count; i += 6)
+            for (int i = 5; i < scoredFeed.Count; i += 6)
             {
                 if (adIndex < adItems.Count)
                 {
-                    combinedFeed.Insert(i, adItems[adIndex]);
+                    scoredFeed.Insert(i, adItems[adIndex]);
                     adIndex++;
                 }
             }
             while (adIndex < adItems.Count)
             {
-                combinedFeed.Add(adItems[adIndex]);
+                scoredFeed.Add(adItems[adIndex]);
                 adIndex++;
             }
 
-            return combinedFeed;
+            return scoredFeed;
         }
 
         // =================================================================
