@@ -521,6 +521,89 @@ namespace Chrika.Api.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<GroupPostDto>> GetGroupPostsAsync(int groupId, int? currentUserId)
+        {
+            // پشکنینی ئەوەی کە ئایا بەکارهێنەر دەسەڵاتی بینینی پۆستەکانی هەیە
+            var group = await _context.Groups.FindAsync(groupId);
+            if (group == null) return new List<GroupPostDto>(); // گرووپ بوونی نییە
+
+            if (group.Type == GroupType.Private)
+            {
+                var isMember = currentUserId.HasValue && await _context.GroupMembers
+                    .AnyAsync(m => m.GroupId == groupId && m.UserId == currentUserId.Value);
+                if (!isMember) return null; // یان new List<GroupPostDto>()
+            }
+
+            // هێنانی پۆستەکان و گۆڕینیان بۆ DTO
+            return await _context.GroupPosts
+                .Where(gp => gp.GroupId == groupId)
+                .AsNoTracking()
+                .OrderByDescending(gp => gp.CreatedAt)
+                .Include(gp => gp.Author)
+                .Select(gp => new GroupPostDto
+                {
+                 Id = gp.Id,
+                 Content = gp.Content,
+                 PostType = gp.PostType.ToString(), // === گۆڕانکارییەکە لێرەدایە ===
+                 MediaUrl = gp.MediaUrl,
+                 IsLive = gp.IsLive,
+                 PlaybackUrl = gp.PlaybackUrl,
+                 CreatedAt = gp.CreatedAt,
+                 AuthorId = gp.AuthorId,
+                 AuthorUsername = gp.Author.Username,
+                 AuthorProfilePicture = gp.Author.ProfilePicture,
+
+                 LikesCount = _context.Likes.Count(l => l.GroupPostId == gp.Id),
+                 CommentsCount = _context.Comments.Count(c => c.GroupPostId == gp.Id),
+                 IsLikedByCurrentUser = currentUserId.HasValue && _context.Likes.Any(l => l.GroupPostId == gp.Id && l.UserId == currentUserId.Value)
+                }).ToListAsync();
+        }
+
+        public async Task<GroupPostDto?> CreateGroupPostAsync(int groupId, CreateGroupPostDto dto, int authorId)
+        {
+            // 1. پشکنینی ئەوەی کە ئایا نووسەر ئەندامی گرووپەکەیە
+            var isMember = await _context.GroupMembers
+                .AnyAsync(m => m.GroupId == groupId && m.UserId == authorId);
+
+            if (!isMember)
+            {
+                // ئەگەر ئەندام نەبوو، ڕێگەی پێنادرێت پۆست بکات
+                return null;
+            }
+
+            // 2. دروستکردنی ئۆبجێکتی GroupPost
+            var groupPost = new GroupPost
+            {
+                Content = dto.Content,
+                PostType = dto.PostType,
+                MediaUrl = dto.MediaUrl,
+                GroupId = groupId,
+                AuthorId = authorId
+            };
+
+            // 3. زیادکردنی بۆ بنکەی دراوە
+            _context.GroupPosts.Add(groupPost);
+            await _context.SaveChangesAsync();
+
+            // 4. گەڕاندنەوەی وەک DTO
+            // لێرەدا پێویستمان بە بانگکردنەوەی GetGroupPostsAsync نییە، دەتوانین ڕاستەوخۆ دروستی بکەین
+            var author = await _context.Users.FindAsync(authorId);
+            return new GroupPostDto
+            {
+                Id = groupPost.Id,
+                Content = groupPost.Content,
+                PostType = groupPost.PostType.ToString(),
+                MediaUrl = groupPost.MediaUrl,
+                CreatedAt = groupPost.CreatedAt,
+                AuthorId = authorId,
+                AuthorUsername = author.Username,
+                AuthorProfilePicture = author.ProfilePicture,
+                LikesCount = 0,
+                CommentsCount = 0,
+                IsLikedByCurrentUser = false
+            };
+        }
+
 
     }
 }
