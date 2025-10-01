@@ -290,5 +290,98 @@ namespace Chrika.Api.Services
             return await GetGroupByIdAsync(groupId);
         }
 
+
+        public async Task<bool> PromoteMemberAsync(int groupId, int targetUserId, int currentUserId)
+        {
+            // 1. پشکنینی دەسەڵاتی بەکارهێنەری ئێستا (دەبێت ئۆنەر بێت)
+            var currentUserMembership = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == currentUserId);
+
+            if (currentUserMembership?.Role != GroupRole.Owner)
+            {
+                // تەنها خاوەنی گرووپ دەتوانێت کەسێک بکات بە ئەدمین
+                return false;
+            }
+
+            // 2. دۆزینەوەی ئەندامی ئامانج
+            var targetMember = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == targetUserId);
+
+            // 3. دڵنیابوونەوە لەوەی کە ئەندامەکە بوونی هەیە و ڕۆڵەکەی Memberـە
+            if (targetMember == null || targetMember.Role != GroupRole.Member)
+            {
+                // یان ئەندامەکە بوونی نییە، یان پێشتر ئەدمین/ئۆنەرە
+                return false;
+            }
+
+            // 4. گۆڕینی ڕۆڵ
+            targetMember.Role = GroupRole.Admin;
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> DemoteMemberAsync(int groupId, int targetUserId, int currentUserId)
+        {
+            // 1. پشکنینی دەسەڵاتی بەکارهێنەری ئێستا (دەبێت ئۆنەر بێت)
+            var currentUserMembership = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == currentUserId);
+
+            if (currentUserMembership?.Role != GroupRole.Owner)
+            {
+                return false;
+            }
+
+            // 2. دۆزینەوەی ئەندامی ئامانج
+            var targetMember = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == targetUserId);
+
+            // 3. دڵنیابوونەوە لەوەی کە ئەندامەکە بوونی هەیە و ڕۆڵەکەی Adminـە
+            if (targetMember == null || targetMember.Role != GroupRole.Admin)
+            {
+                return false;
+            }
+
+            // 4. گۆڕینی ڕۆڵ
+            targetMember.Role = GroupRole.Member;
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> KickMemberAsync(int groupId, int targetUserId, int currentUserId)
+        {
+            // 1. پشکنینی دەسەڵاتی بەکارهێنەری ئێستا (ئۆنەر یان ئەدمین)
+            var currentUserMembership = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == currentUserId);
+
+            if (currentUserMembership == null || (currentUserMembership.Role != GroupRole.Owner && currentUserMembership.Role != GroupRole.Admin))
+            {
+                return false;
+            }
+
+            // 2. دۆزینەوەی ئەندامی ئامانج
+            var targetMember = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == targetUserId);
+
+            if (targetMember == null)
+            {
+                return false; // ئەندامەکە بوونی نییە
+            }
+
+            // 3. === یاسای گرنگ: کێ دەتوانێت کێ دەربکات؟ ===
+            // ئۆنەر ناتوانرێت دەربکرێت
+            if (targetMember.Role == GroupRole.Owner) return false;
+            // ئەدمین ناتوانێت ئەدمینێکی تر دەربکات (تەنها ئۆنەر دەتوانێت)
+            if (targetMember.Role == GroupRole.Admin && currentUserMembership.Role != GroupRole.Owner) return false;
+
+            // 4. سڕینەوەی ئەندامێتی
+            _context.GroupMembers.Remove(targetMember);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+
     }
 }

@@ -137,4 +137,50 @@ public class GroupsController : ControllerBase
         return Ok(updatedGroup);
     }
 
+
+    // POST: api/groups/{groupId}/members/{userId}/promote
+    [HttpPost("{groupId}/members/{userId}/promote")]
+    public async Task<IActionResult> PromoteMember(int groupId, int userId)
+    {
+        var currentUserId = User.GetUserId();
+        var success = await _groupService.PromoteMemberAsync(groupId, userId, currentUserId);
+
+        if (!success)
+        {
+            return Forbid("You do not have permission to promote this member, or the user is not a valid member to be promoted.");
+        }
+
+        return Ok("Member promoted to admin successfully.");
+    }
+
+    // POST: api/groups/{groupId}/members/{userId}/demote
+    [HttpPost("{groupId}/members/{userId}/demote")]
+    public async Task<IActionResult> DemoteMember(int groupId, int userId)
+    {
+        var currentUserId = User.GetUserId();
+        var success = await _groupService.DemoteMemberAsync(groupId, userId, currentUserId);
+
+        if (!success)
+        {
+            return Forbid("You do not have permission to demote this admin, or the user is not an admin.");
+        }
+
+        return Ok("Admin demoted to member successfully.");
+    }
+
+    // DELETE: api/groups/{groupId}/members/{userId}
+    [HttpDelete("{groupId}/members/{userId}")]
+    public async Task<IActionResult> KickMember(int groupId, int userId)
+    {
+        var currentUserId = User.GetUserId();
+        var success = await _groupService.KickMemberAsync(groupId, userId, currentUserId);
+
+        if (!success)
+        {
+            return Forbid("You do not have permission to kick this member, or the member does not exist.");
+        }
+
+        return NoContent(); // 204 No Content واتە بە سەرکەوتوویی دەرکرا
+    }
+
 }

@@ -18,6 +18,8 @@ namespace Chrika.Api.Services
         Task<bool> FollowGroupAsync(int groupId, int userId);
         Task<bool> UnfollowGroupAsync(int groupId, int userId);
         Task<GroupDto?> UpdateGroupAsync(int groupId, UpdateGroupDto updateDto, int userId);
-
+        Task<bool> PromoteMemberAsync(int groupId, int targetUserId, int currentUserId);
+        Task<bool> DemoteMemberAsync(int groupId, int targetUserId, int currentUserId);
+        Task<bool> KickMemberAsync(int groupId, int targetUserId, int currentUserId);
     }
 }
