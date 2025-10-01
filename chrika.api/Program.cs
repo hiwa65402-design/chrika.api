@@ -1,5 +1,6 @@
 ﻿// using statements
 using Chrika.Api.Data;
+using Chrika.Api.Hubs;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ using Microsoft.OpenApi.Models; // <-- زیادکرا بۆ Swagger
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddSignalR();
 // --- Section 1: Configure Services ---
 
 // 1. Add DbContext for Entity Framework
@@ -128,6 +129,7 @@ app.UseStaticFiles();
 // گرنگ: ڕیزبەندی ئەم دووانە نابێت بگۆڕدرێت
 app.UseAuthentication(); // یەکەم: پشکنینی تۆکن
 app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
+app.MapHub<NotificationHub>("/notificationHub"); 
 
 app.MapControllers();
 

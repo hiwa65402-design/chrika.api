@@ -5,6 +5,8 @@ namespace Chrika.Api.Services
 {
     public interface INotificationService
     {
-        Task CreateNotificationAsync(int userId, int triggeredByUserId, NotificationType type, int? entityId);
+        Task<Notification> CreateNotificationAsync(int userId, int triggeredByUserId, NotificationType type, int? entityId);
+        string GenerateNotificationMessage(NotificationType type, string username);
+
     }
 }
