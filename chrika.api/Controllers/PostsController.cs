@@ -37,7 +37,7 @@ public class PostsController : ControllerBase
     public async Task<ActionResult<IEnumerable<PostDto>>> GetUserFeed()
     {
         var userId = User.GetUserId();
-        var feed = await _postService.GetFeedForUserAsync(userId);
+        var feed = await _postService.GetUniversalFeedAsync(userId);
         return Ok(feed);
     }
 

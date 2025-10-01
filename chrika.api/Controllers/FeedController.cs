@@ -1,116 +1,46 @@
-﻿using Chrika.Api.Data;
-using Chrika.Api.DTOs;
-using Chrika.Api.Models;
-using Chrika.Api.Services; // <-- گرنگ: ئەمە زیاد بکە
+﻿// Controllers/FeedController.cs
+
+using Chrika.Api.Helpers;
+using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
-[Route("api/[controller]")]
-[ApiController]
-[Authorize]
-public class FeedController : ControllerBase
+namespace Chrika.Api.Controllers
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IAnalyticsService _analyticsService; // <-- زیادکرا
-
-    // === گۆڕانکاری یەکەم: زیادکردنی IAnalyticsService بۆ constructor ===
-    public FeedController(ApplicationDbContext context, IAnalyticsService analyticsService)
+    [Route("api/feed")]
+    [ApiController]
+    public class FeedController : ControllerBase
     {
-        _context = context;
-        _analyticsService = analyticsService; // <-- زیادکرا
-    }
+        private readonly IPostService _postService;
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<PostDto>>> GetMyFeed()
-    {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        var user = await _context.Users.FindAsync(userId);
-        var userLocation = user?.Location;
-
-        // 1. وەرگرتنی پۆستی ئەو کەسانەی فۆڵۆت کردوون (وەک خۆی)
-        var followingIds = await _context.Follows
-            .Where(f => f.FollowerId == userId)
-            .Select(f => f.FollowingId)
-            .ToListAsync();
-
-        var feedPosts = await _context.Posts
-            .Where(p => followingIds.Contains(p.UserId) && p.IsActive)
-            .Include(p => p.User)
-            .Include(p => p.Likes)
-            .Include(p => p.Comments)
-            .OrderByDescending(p => p.CreatedAt)
-            .Select(p => new PostDto
-            {
-                Id = p.Id,
-                Content = p.Content,
-                ImageUrl = p.ImageUrl,
-                CreatedAt = p.CreatedAt,
-                UserId = p.UserId,
-                Username = p.User.Username,
-                UserProfilePicture = p.User.ProfilePicture,
-                LikesCount = p.Likes.Count,
-                CommentsCount = p.Comments.Count,
-                IsLikedByCurrentUser = p.Likes.Any(l => l.UserId == userId)
-            })
-            .ToListAsync();
-
-        // 2. وەرگرتنی هەموو ڕیکلامە چالاکەکان
-        var allActiveCampaigns = await _context.AdCampaigns
-            .Where(c => c.Status == CampaignStatus.Active && c.EndDate > DateTime.UtcNow)
-            .Include(c => c.PagePost.Page) // <-- تەنها Page لۆد بکە
-            .ToListAsync();
-
-        // 3. فلتەرکردنی ڕیکلامەکان و دروستکردنی DTO
-        var relevantCampaigns = allActiveCampaigns
-            .Where(c => c.Audience.Locations.Count == 0 || (userLocation != null && c.Audience.Locations.Contains(userLocation)))
-            .ToList();
-
-        var adDtos = relevantCampaigns.Select(c => new PostDto
+        // ئێستا تەنها IPostService وەردەگرێت
+        public FeedController(IPostService postService)
         {
-            Id = c.PagePost.Id,
-            Content = c.PagePost.Content,
-            ImageUrl = c.PagePost.ImageUrl,
-            CreatedAt = c.PagePost.CreatedAt,
-            UserId = c.PagePost.Page.OwnerId,
-            Username = c.PagePost.Page.Name,
-            UserProfilePicture = c.PagePost.Page.ProfilePicture,
-            IsSponsoredPost = true,
-            // AdCampaignId پێویستە بۆ تۆمارکردنی کرتە
-            AdCampaignId = c.Id
-        })
-        .ToList();
-
-        // 4. تێکەڵکردنی ڕیکلامەکان لەگەڵ پۆستەکان (وەک خۆی)
-        var combinedFeed = new List<PostDto>();
-        combinedFeed.AddRange(feedPosts);
-
-        int adIndex = 0;
-        for (int i = 5; i < combinedFeed.Count; i += 6)
-        {
-            if (adIndex < adDtos.Count)
-            {
-                combinedFeed.Insert(i, adDtos[adIndex]);
-                adIndex++;
-            }
-        }
-        while (adIndex < adDtos.Count)
-        {
-            combinedFeed.Add(adDtos[adIndex]);
-            adIndex++;
+            _postService = postService;
         }
 
-        // === گۆڕانکاری دووەم: تۆمارکردنی بینینەکان ===
-        foreach (var campaign in relevantCampaigns)
+        /// <summary>
+        /// Feedـی تایبەت بە بەکارهێنەری لۆگینبوو دەگەڕێنێتەوە (لەگەڵ ڕیکلام).
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetMyFeed()
         {
-            await _analyticsService.RecordInteractionAsync(campaign.Id, InteractionType.Impression, userId);
+            var userId = User.GetUserId();
+            var feed = await _postService.GetUniversalFeedAsync(userId);
+            return Ok(feed);
         }
-        // ==========================================
 
-        return Ok(combinedFeed);
+        /// <summary>
+        /// Feedـێکی گشتی دەگەڕێنێتەوە بۆ کەسانی بێ لۆگین (لەگەڵ ڕیکلامی گشتی).
+        /// </summary>
+        [HttpGet("public")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPublicFeed()
+        {
+            var feed = await _postService.GetUniversalFeedAsync(null);
+            return Ok(feed);
+        }
     }
 }
