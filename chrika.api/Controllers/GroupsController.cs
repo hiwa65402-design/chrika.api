@@ -143,4 +143,51 @@ public class GroupsController : ControllerBase
         }
         return NoContent();
     }
+   
+
+    // POST: api/groups/{id}/request-join
+    [HttpPost("{id}/request-join")]
+    public async Task<IActionResult> RequestToJoinGroup(int id)
+    {
+        var userId = User.GetUserId();
+        var success = await _groupService.RequestToJoinGroupAsync(id, userId);
+
+        if (!success)
+        {
+            return BadRequest("Unable to send request. The group may not be private, or you are already a member/have a pending request.");
+        }
+
+        return Ok("Your request to join the group has been sent.");
+    }
+
+    // GET: api/groups/{id}/join-requests
+    [HttpGet("{id}/join-requests")]
+    public async Task<ActionResult<IEnumerable<GroupJoinRequestDto>>> GetJoinRequests(int id)
+    {
+        var userId = User.GetUserId();
+        var requests = await _groupService.GetJoinRequestsAsync(id, userId);
+
+        if (requests == null)
+        {
+            return Forbid("You do not have permission to view join requests for this group.");
+        }
+
+        return Ok(requests);
+    }
+
+    // POST: api/groups/requests/{requestId}/process
+    [HttpPost("requests/{requestId}/process")]
+    public async Task<IActionResult> ProcessJoinRequest(int requestId, [FromBody] ProcessRequestDto dto)
+    {
+        var userId = User.GetUserId();
+        var success = await _groupService.ProcessJoinRequestAsync(requestId, dto.Accept, userId);
+
+        if (!success)
+        {
+            return BadRequest("Unable to process this request. It might not exist or you don't have permission.");
+        }
+
+        return Ok(dto.Accept ? "Request accepted and user added to the group." : "Request rejected.");
+    }
+
 }

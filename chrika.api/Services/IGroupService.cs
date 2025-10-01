@@ -21,5 +21,8 @@ namespace Chrika.Api.Services
         Task<bool> PromoteMemberAsync(int groupId, int targetUserId, int currentUserId);
         Task<bool> DemoteMemberAsync(int groupId, int targetUserId, int currentUserId);
         Task<bool> KickMemberAsync(int groupId, int targetUserId, int currentUserId);
+        Task<bool> RequestToJoinGroupAsync(int groupId, int userId);
+        Task<IEnumerable<GroupJoinRequestDto>> GetJoinRequestsAsync(int groupId, int currentUserId);
+        Task<bool> ProcessJoinRequestAsync(int requestId, bool accept, int currentUserId);
     }
 }

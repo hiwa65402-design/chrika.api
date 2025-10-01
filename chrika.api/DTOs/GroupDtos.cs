@@ -56,5 +56,17 @@ namespace Chrika.Api.DTOs // یان Dtos
         public string? ProfilePictureUrl { get; set; }
         public string? CoverPictureUrl { get; set; }
     }
-
+    public class GroupJoinRequestDto
+    {
+        public int RequestId { get; set; }
+        public int UserId { get; set; }
+        public string? Username { get; set; }
+        public string? UserProfilePicture { get; set; }
+        public DateTime RequestedAt { get; set; }
+    }
+    public class ProcessRequestDto
+    {
+        [Required]
+        public bool Accept { get; set; } // true = قبوڵکرا، false = ڕەتکرایەوە
+    }
 }

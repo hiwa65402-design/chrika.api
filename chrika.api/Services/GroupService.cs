@@ -382,6 +382,105 @@ namespace Chrika.Api.Services
             return true;
         }
 
+       
+        public async Task<bool> RequestToJoinGroupAsync(int groupId, int userId)
+        {
+            // 1. پشکنینی بوونی گرووپ و جۆرەکەی
+            var group = await _context.Groups.FindAsync(groupId);
+            if (group == null || group.Type != GroupType.Private)
+            {
+                return false; // گرووپەکە بوونی نییە یان Private نییە
+            }
+
+            // 2. پشکنینی ئەوەی کە ئایا بەکارهێنەرەکە پێشتر ئەندامە یان داواکاری ناردووە
+            var isMember = await _context.GroupMembers.AnyAsync(m => m.GroupId == groupId && m.UserId == userId);
+            var hasPendingRequest = await _context.GroupJoinRequests.AnyAsync(r => r.GroupId == groupId && r.UserId == userId && r.Status == RequestStatus.Pending);
+
+            if (isMember || hasPendingRequest)
+            {
+                return false; // پێشتر ئەندامە یان داواکارییەکی چاوەڕوانکراوی هەیە
+            }
+
+            // 3. دروستکردنی داواکاری نوێ
+            var request = new GroupJoinRequest
+            {
+                GroupId = groupId,
+                UserId = userId
+            };
+
+            _context.GroupJoinRequests.Add(request);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<IEnumerable<GroupJoinRequestDto>> GetJoinRequestsAsync(int groupId, int currentUserId)
+        {
+            // 1. پشکنینی دەسەڵاتی بەکارهێنەری ئێستا (دەبێت ئۆنەر یان ئەدمین بێت)
+            var isAuthorized = await _context.GroupMembers
+                .AnyAsync(m => m.GroupId == groupId && m.UserId == currentUserId && (m.Role == GroupRole.Owner || m.Role == GroupRole.Admin));
+
+            if (!isAuthorized)
+            {
+                return null; // یان لیستی بەتاڵ دەگەڕێنینەوە
+            }
+
+            // 2. هێنانی هەموو داواکارییە چاوەڕوانکراوەکان
+            return await _context.GroupJoinRequests
+                .Where(r => r.GroupId == groupId && r.Status == RequestStatus.Pending)
+                .Include(r => r.User) // بۆ وەرگرتنی زانیاری بەکارهێنەر
+                .Select(r => new GroupJoinRequestDto
+                {
+                    RequestId = r.Id,
+                    UserId = r.UserId,
+                    Username = r.User.Username,
+                    UserProfilePicture = r.User.ProfilePicture,
+                    RequestedAt = r.RequestedAt
+                })
+                .ToListAsync();
+        }
+
+        public async Task<bool> ProcessJoinRequestAsync(int requestId, bool accept, int currentUserId)
+        {
+            // 1. دۆزینەوەی داواکارییەکە
+            var request = await _context.GroupJoinRequests.Include(r => r.Group).FirstOrDefaultAsync(r => r.Id == requestId);
+            if (request == null || request.Status != RequestStatus.Pending)
+            {
+                return false; // داواکارییەکە بوونی نییە یان پێشتر پرۆسێس کراوە
+            }
+
+            // 2. پشکنینی دەسەڵاتی بەکارهێنەری ئێستا
+            var isAuthorized = await _context.GroupMembers
+                .AnyAsync(m => m.GroupId == request.GroupId && m.UserId == currentUserId && (m.Role == GroupRole.Owner || m.Role == GroupRole.Admin));
+
+            if (!isAuthorized)
+            {
+                return false;
+            }
+
+            if (accept)
+            {
+                // ئەگەر قبوڵکرا
+                request.Status = RequestStatus.Accepted;
+
+                // زیادکردنی بەکارهێنەر وەک ئەندام
+                var newMember = new GroupMember
+                {
+                    GroupId = request.GroupId,
+                    UserId = request.UserId,
+                    Role = GroupRole.Member
+                };
+                _context.GroupMembers.Add(newMember);
+            }
+            else
+            {
+                // ئەگەر ڕەتکرایەوە
+                request.Status = RequestStatus.Rejected;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
     }
 }
