@@ -17,5 +17,7 @@ namespace Chrika.Api.Services
         Task<bool> LeaveGroupAsync(int groupId, int userId);
         Task<bool> FollowGroupAsync(int groupId, int userId);
         Task<bool> UnfollowGroupAsync(int groupId, int userId);
+        Task<GroupDto?> UpdateGroupAsync(int groupId, UpdateGroupDto updateDto, int userId);
+
     }
 }

@@ -238,6 +238,57 @@ namespace Chrika.Api.Services
             return true;
         }
 
+   
+
+        public async Task<GroupDto?> UpdateGroupAsync(int groupId, UpdateGroupDto updateDto, int userId)
+        {
+            // 1. دۆزینەوەی گرووپ
+            var group = await _context.Groups.FindAsync(groupId);
+            if (group == null)
+            {
+                return null; // گرووپ بوونی نییە
+            }
+
+            // 2. === پشکنینی دەسەڵات ===
+            // ئایا بەکارهێنەرەکە ئەندامە و ڕۆڵی ئۆنەر یان ئەدمینە؟
+            var member = await _context.GroupMembers
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId);
+
+            if (member == null || (member.Role != GroupRole.Owner && member.Role != GroupRole.Admin))
+            {
+                // ئەگەر بەکارهێنەرەکە ئەندام نەبوو، یان ڕۆڵەکەی Owner/Admin نەبوو، ڕێگەی پێنادرێت
+                return null;
+            }
+
+            // 3. نوێکردنەوەی زانیارییەکان
+            // تەنها ئەو زانیاریانە نوێ دەکەینەوە کە لە DTOـکەدا نێردراون
+            if (!string.IsNullOrEmpty(updateDto.Name))
+            {
+                group.Name = updateDto.Name;
+            }
+            if (updateDto.Description != null)
+            {
+                group.Description = updateDto.Description;
+            }
+            if (updateDto.Bio != null)
+            {
+                group.Bio = updateDto.Bio;
+            }
+            if (updateDto.ProfilePictureUrl != null)
+            {
+                group.ProfilePictureUrl = updateDto.ProfilePictureUrl;
+            }
+            if (updateDto.CoverPictureUrl != null)
+            {
+                group.CoverPictureUrl = updateDto.CoverPictureUrl;
+            }
+
+            // 4. پاشەکەوتکردنی گۆڕانکارییەکان
+            await _context.SaveChangesAsync();
+
+            // 5. گەڕاندنەوەی زانیاری نوێکراوەی گرووپەکە
+            return await GetGroupByIdAsync(groupId);
+        }
 
     }
 }

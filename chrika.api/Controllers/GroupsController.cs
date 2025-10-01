@@ -120,5 +120,21 @@ public class GroupsController : ControllerBase
 
         return Ok("Successfully unfollowed the group.");
     }
+ 
+
+    // PUT: api/groups/5
+    [HttpPut("{id}")]
+    public async Task<ActionResult<GroupDto>> UpdateGroup(int id, [FromBody] UpdateGroupDto updateDto)
+    {
+        var userId = User.GetUserId();
+        var updatedGroup = await _groupService.UpdateGroupAsync(id, updateDto, userId);
+
+        if (updatedGroup == null)
+        {
+            return Forbid("You do not have permission to update this group, or the group does not exist.");
+        }
+
+        return Ok(updatedGroup);
+    }
 
 }
