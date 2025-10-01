@@ -30,6 +30,7 @@ namespace Chrika.Api.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             base.OnModelCreating(modelBuilder);
 
             // --- پێناسەکردنی کلیلە تێکەڵەکان (Composite Keys) ---
@@ -45,6 +46,8 @@ namespace Chrika.Api.Data
 
             modelBuilder.Entity<GroupFollower>()
                 .HasKey(gf => new { gf.GroupId, gf.UserId });
+            modelBuilder.Entity<Group>().ToTable("AppGroups");
+            modelBuilder.Entity<Group>().HasIndex(g => g.Username).IsUnique();
 
             // --- پێناسەکردنی پەیوەندییەکان (Relationships) ---
 
@@ -98,6 +101,7 @@ namespace Chrika.Api.Data
             modelBuilder.Entity<Group>()
                 .HasIndex(g => g.Username)
                 .IsUnique();
+
         }
     }
 }
