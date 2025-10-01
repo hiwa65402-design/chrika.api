@@ -23,7 +23,8 @@ namespace Chrika.Api.Services
         {
             // 1. هێنانی ڤیدیۆی پۆستە ئاساییەکان
             var userVideoPosts = _context.Posts
-                .Where(p => p.ImageUrl != null && (p.ImageUrl.EndsWith(".mp4") || p.ImageUrl.EndsWith(".mov"))) // بۆ نموونە
+                // تێبینی: ئەمە ڕێگەیەکی سادەیە، دواتر دەتوانین باشترینی بکەین
+                .Where(p => p.ImageUrl != null && (p.ImageUrl.EndsWith(".mp4") || p.ImageUrl.EndsWith(".mov")))
                 .Select(p => new VideoFeedItemDto
                 {
                     Id = p.Id,
@@ -34,6 +35,13 @@ namespace Chrika.Api.Services
                     AuthorId = p.UserId,
                     AuthorUsername = p.User.Username,
                     AuthorProfilePicture = p.User.ProfilePicture,
+
+                    // === گۆڕانکارییەکە لێرەدایە ===
+                    // ئەم دوو پرۆپەرتییە لێرەدا بوونیان نییە، بۆیە null دادەنێین
+                    GroupId = null,
+                    GroupName = null,
+                    // =============================
+
                     LikesCount = _context.Likes.Count(l => l.PostId == p.Id),
                     CommentsCount = _context.Comments.Count(c => c.PostId == p.Id),
                     IsLikedByCurrentUser = userId.HasValue && _context.Likes.Any(l => l.PostId == p.Id && l.UserId == userId.Value)
@@ -52,8 +60,11 @@ namespace Chrika.Api.Services
                     AuthorId = gp.AuthorId,
                     AuthorUsername = gp.Author.Username,
                     AuthorProfilePicture = gp.Author.ProfilePicture,
+
+                    // ئەم دوو پرۆپەرتییە لێرەدا بوونیان هەیە
                     GroupId = gp.GroupId,
                     GroupName = gp.Group.Name,
+
                     LikesCount = _context.Likes.Count(l => l.GroupPostId == gp.Id),
                     CommentsCount = _context.Comments.Count(c => c.GroupPostId == gp.Id),
                     IsLikedByCurrentUser = userId.HasValue && _context.Likes.Any(l => l.GroupPostId == gp.Id && l.UserId == userId.Value)
@@ -63,7 +74,6 @@ namespace Chrika.Api.Services
             var allVideos = userVideoPosts.Concat(groupVideoPosts);
 
             // 4. ڕیزکردن و لاپەڕەبەندکردن (Pagination)
-            // لێرەدا دەتوانین ئەلگۆریتمی جیاواز بەکاربهێنین. بۆ سادەیی، بەپێی نوێترین ڕیزی دەکەین.
             return await allVideos
                 .OrderByDescending(v => v.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
