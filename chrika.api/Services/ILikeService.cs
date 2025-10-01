@@ -1,7 +1,10 @@
-﻿namespace Chrika.Api.Services
+﻿using System.Threading.Tasks;
+
+namespace Chrika.Api.Services
 {
     public interface ILikeService
     {
-        Task<bool> ToggleLikeAsync(int postId, int userId);
+        // فانکشنێکی گشتی بۆ لایککردن
+        Task<bool> ToggleLikeAsync(int entityId, string entityType, int userId);
     }
 }

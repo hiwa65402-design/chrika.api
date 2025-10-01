@@ -7,6 +7,8 @@
         public string? Content { get; set; }
         public DateTime CreatedAt { get; set; }
         public string? Username { get; set; } // ناوی ئەو کەسەی کۆمێنتەکەی نووسیوە
+        public string? UserProfilePicture { get; set; }
+
     }
 
     // بۆ وەرگرتنی زانیاری لە کاتی دروستکردنی کۆمێنتی نوێ

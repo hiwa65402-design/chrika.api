@@ -6,8 +6,8 @@ namespace Chrika.Api.Services
 {
     public interface ICommentService
     {
-        Task<CommentDto?> CreateCommentAsync(int postId, CreateCommentDto createCommentDto, int userId);
-        Task<IEnumerable<CommentDto>> GetCommentsForPostAsync(int postId);
+        Task<CommentDto?> CreateCommentAsync(int entityId, string entityType, CreateCommentDto dto, int userId);
+        Task<IEnumerable<CommentDto>> GetCommentsAsync(int entityId, string entityType);
         Task<bool> DeleteCommentAsync(int commentId, int userId);
     }
 }

@@ -41,6 +41,7 @@ builder.Services.AddScoped<IGroupPostService, GroupPostService>();
 
 
 
+
 // 4. Add Authentication with JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

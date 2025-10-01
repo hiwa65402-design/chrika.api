@@ -1,66 +1,58 @@
 ﻿using Chrika.Api.DTOs;
+using Chrika.Api.Helpers;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace Chrika.Api.Controllers
+[Route("api/comments")]
+[ApiController]
+[Authorize]
+public class CommentsController : ControllerBase
 {
-    [Route("api")]
-    [ApiController]
-    public class CommentsController : ControllerBase
+    private readonly ICommentService _commentService;
+
+    public CommentsController(ICommentService commentService)
     {
-        private readonly ICommentService _commentService;
+        _commentService = commentService;
+    }
 
-        public CommentsController(ICommentService commentService)
-        {
-            _commentService = commentService;
-        }
+    [HttpPost("post/{postId}")]
+    public async Task<IActionResult> CreatePostComment(int postId, [FromBody] CreateCommentDto dto)
+    {
+        var comment = await _commentService.CreateCommentAsync(postId, "post", dto, User.GetUserId());
+        if (comment == null) return NotFound("Post not found.");
+        return Ok(comment);
+    }
 
-        // POST: /api/posts/{postId}/comments
-        [HttpPost("posts/{postId}/comments")]
-        [Authorize]
-        public async Task<IActionResult> CreateComment(int postId, CreateCommentDto createCommentDto)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+    [HttpGet("post/{postId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPostComments(int postId)
+    {
+        var comments = await _commentService.GetCommentsAsync(postId, "post");
+        return Ok(comments);
+    }
 
-            var comment = await _commentService.CreateCommentAsync(postId, createCommentDto, int.Parse(userId));
-            if (comment == null) return NotFound("Post not found.");
+    [HttpPost("grouppost/{groupPostId}")]
+    public async Task<IActionResult> CreateGroupPostComment(int groupPostId, [FromBody] CreateCommentDto dto)
+    {
+        var comment = await _commentService.CreateCommentAsync(groupPostId, "grouppost", dto, User.GetUserId());
+        if (comment == null) return NotFound("Group post not found.");
+        return Ok(comment);
+    }
 
-            return CreatedAtAction(nameof(GetCommentById), new { commentId = comment.Id }, comment);
-        }
+    [HttpGet("grouppost/{groupPostId}")]
+    public async Task<IActionResult> GetGroupPostComments(int groupPostId)
+    {
+        var comments = await _commentService.GetCommentsAsync(groupPostId, "grouppost");
+        return Ok(comments);
+    }
 
-        // GET: /api/posts/{postId}/comments
-        [HttpGet("posts/{postId}/comments")]
-        public async Task<IActionResult> GetCommentsForPost(int postId)
-        {
-            var comments = await _commentService.GetCommentsForPostAsync(postId);
-            return Ok(comments);
-        }
-
-        // GET: /api/comments/{commentId} (بۆ CreatedAtAction پێویستمانە)
-        [HttpGet("comments/{commentId}", Name = "GetCommentById")]
-        public async Task<IActionResult> GetCommentById(int commentId)
-        {
-            // ئەمە دەتوانین دواتر بە تەواوی جێبەجێ بکەین
-            // بۆ ئێستا تەنها OK دەگەڕێنینەوە
-            return Ok();
-        }
-
-        // DELETE: /api/comments/{commentId}
-        [HttpDelete("comments/{commentId}")]
-        [Authorize]
-        public async Task<IActionResult> DeleteComment(int commentId)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
-
-            var success = await _commentService.DeleteCommentAsync(commentId, int.Parse(userId));
-            if (!success) return NotFound("Comment not found or user not authorized.");
-
-            return NoContent();
-        }
+    [HttpDelete("{commentId}")]
+    public async Task<IActionResult> DeleteComment(int commentId)
+    {
+        var success = await _commentService.DeleteCommentAsync(commentId, User.GetUserId());
+        if (!success) return Forbid("You do not have permission to delete this comment.");
+        return NoContent();
     }
 }

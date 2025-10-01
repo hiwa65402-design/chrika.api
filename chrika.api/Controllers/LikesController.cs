@@ -1,38 +1,34 @@
-﻿using Chrika.Api.Services;
+﻿using Chrika.Api.Helpers;
+using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace Chrika.Api.Controllers
+[Route("api/likes")]
+[ApiController]
+[Authorize]
+public class LikesController : ControllerBase
 {
-    [Route("api/posts/{postId}/like")]
-    [ApiController]
-    [Authorize] // هەموو کارەکانی لایک پێویستی بە لۆگین هەیە
-    public class LikesController : ControllerBase
+    private readonly ILikeService _likeService;
+
+    public LikesController(ILikeService likeService)
     {
-        private readonly ILikeService _likeService;
+        _likeService = likeService;
+    }
 
-        public LikesController(ILikeService likeService)
-        {
-            _likeService = likeService;
-        }
+    [HttpPost("post/{postId}")]
+    public async Task<IActionResult> TogglePostLike(int postId)
+    {
+        var success = await _likeService.ToggleLikeAsync(postId, "post", User.GetUserId());
+        if (!success) return NotFound("Post not found.");
+        return Ok();
+    }
 
-        // POST: api/posts/5/like
-        [HttpPost]
-        public async Task<IActionResult> ToggleLike(int postId)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
-
-            var success = await _likeService.ToggleLikeAsync(postId, int.Parse(userId));
-
-            if (!success)
-            {
-                return NotFound("Post not found.");
-            }
-
-            return Ok();
-        }
+    [HttpPost("grouppost/{groupPostId}")]
+    public async Task<IActionResult> ToggleGroupPostLike(int groupPostId)
+    {
+        var success = await _likeService.ToggleLikeAsync(groupPostId, "grouppost", User.GetUserId());
+        if (!success) return NotFound("Group post not found.");
+        return Ok();
     }
 }
