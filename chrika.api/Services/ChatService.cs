@@ -45,6 +45,8 @@ namespace Chrika.Api.Services
         }
 
         // === ٢. هێنانی هەموو نامەکانی ناو یەک گفتوگۆ ===
+        // لەناو ChatService.cs
+
         public async Task<IEnumerable<MessageDto>> GetMessagesAsync(int conversationId, int userId)
         {
             var isParticipant = await _context.Conversations
@@ -54,18 +56,25 @@ namespace Chrika.Api.Services
 
             var messages = await _context.Messages
                 .Where(m => m.ConversationId == conversationId)
-                .Include(m => m.ForwardedMessage).ThenInclude(fm => fm.Sender) // بۆ هێنانی زانیاری نامەی forward کراو
+                .Include(m => m.ForwardedMessage).ThenInclude(fm => fm.Sender)
                 .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
             var unreadMessages = messages.Where(m => m.SenderId != userId && !m.IsRead).ToList();
             if (unreadMessages.Any())
             {
+                var messageIds = unreadMessages.Select(m => m.Id).ToList();
+                var senderId = unreadMessages.First().SenderId.ToString();
+
                 foreach (var message in unreadMessages)
                 {
                     message.IsRead = true;
                 }
                 await _context.SaveChangesAsync();
+
+                // === گۆڕانکارییەکە لێرەدایە ===
+                // ئاگادارکردنەوەی نێرەری نامەکان کە نامەکانی خوێندراونەتەوە
+                await _hubContext.Clients.User(senderId).SendAsync("MessagesRead", new { conversationId, messageIds });
             }
 
             return messages.Select(MapToMessageDto);

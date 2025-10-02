@@ -1,5 +1,6 @@
 ﻿using Chrika.Api.DTOs;
 using Chrika.Api.Helpers;
+using Chrika.Api.Models;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,14 +11,20 @@ namespace Chrika.Api.Controllers
     [Route("api/chat")]
     [ApiController]
     [Authorize]
+
     public class ChatController : ControllerBase
     {
+        private readonly IFileService _fileService;
+
         private readonly IChatService _chatService;
 
+
         // Constructorـەکەت وەک خۆی دەمێنێتەوە
-        public ChatController(IChatService chatService) // IFileService لادرا چونکە بەکارنەهاتبوو
+        public ChatController(IChatService chatService, IFileService fileService) // IFileService لادرا چونکە بەکارنەهاتبوو
         {
             _chatService = chatService;
+            _fileService = fileService;
+
         }
 
         // GET: /api/chat/conversations
@@ -104,5 +111,33 @@ namespace Chrika.Api.Controllers
             // 200 OK لەگەڵ زانیاری نامە forward کراوەکە
             return Ok(forwardedMessage);
         }
+
+        // POST: /api/chat/files/upload
+        [HttpPost("files/upload")]
+        // پێویستە جۆری فایلەکەش وەربگرین
+        public async Task<IActionResult> UploadChatFile([FromForm] IFormFile file, [FromForm] FileType fileType)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file was uploaded.");
+            }
+
+            // دڵنیابوونەوە لەوەی کە جۆری فایلەکە بۆ چاتە
+            if (fileType != FileType.ChatImage && fileType != FileType.ChatVideo && fileType != FileType.ChatAudio)
+            {
+                return BadRequest("Invalid file type for chat.");
+            }
+
+            // === لێرەدا هەڵەکە ڕاستکراوەتەوە ===
+            // ئێستا fileType (کە enumـێکە) دەنێرین، نەک string
+            var fileUrl = await _fileService.SaveFileAsync(file, fileType);
+
+            if (string.IsNullOrEmpty(fileUrl))
+            {
+                return StatusCode(500, "An error occurred while saving the file.");
+            }
+
+            return Ok(new { url = fileUrl });
+        }
     }
-}
+    }
