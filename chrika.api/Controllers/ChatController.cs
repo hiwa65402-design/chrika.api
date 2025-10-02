@@ -112,25 +112,29 @@ namespace Chrika.Api.Controllers
             return Ok(forwardedMessage);
         }
 
+
+
         // POST: /api/chat/files/upload
         [HttpPost("files/upload")]
-        // پێویستە جۆری فایلەکەش وەربگرین
-        public async Task<IActionResult> UploadChatFile([FromForm] IFormFile file, [FromForm] FileType fileType)
+        // === گۆڕانکارییەکە لێرەدایە ===
+        // بەکارهێنانی FileUploadDto کە پێشتر دروستمان کردووە
+        public async Task<IActionResult> UploadChatFile([FromForm] FileUploadDto uploadDto)
         {
-            if (file == null || file.Length == 0)
+            if (uploadDto.File == null || uploadDto.File.Length == 0)
             {
                 return BadRequest("No file was uploaded.");
             }
 
             // دڵنیابوونەوە لەوەی کە جۆری فایلەکە بۆ چاتە
-            if (fileType != FileType.ChatImage && fileType != FileType.ChatVideo && fileType != FileType.ChatAudio)
+            if (uploadDto.FileType != FileType.ChatImage &&
+                uploadDto.FileType != FileType.ChatVideo &&
+                uploadDto.FileType != FileType.ChatAudio)
             {
-                return BadRequest("Invalid file type for chat.");
+                return BadRequest("Invalid file type for chat. Please use ChatImage, ChatVideo, or ChatAudio.");
             }
 
-            // === لێرەدا هەڵەکە ڕاستکراوەتەوە ===
-            // ئێستا fileType (کە enumـێکە) دەنێرین، نەک string
-            var fileUrl = await _fileService.SaveFileAsync(file, fileType);
+            // بەکارهێنانی پڕۆپێرتییەکانی ناو DTO
+            var fileUrl = await _fileService.SaveFileAsync(uploadDto.File, uploadDto.FileType);
 
             if (string.IsNullOrEmpty(fileUrl))
             {
@@ -139,5 +143,6 @@ namespace Chrika.Api.Controllers
 
             return Ok(new { url = fileUrl });
         }
+
     }
-    }
+}
