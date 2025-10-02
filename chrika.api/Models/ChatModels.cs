@@ -56,7 +56,9 @@ namespace Chrika.Api.Models
         public virtual User? Sender { get; set; }
 
         // بۆ نامەی جۆری Forwarded
+
         public int? ForwardedMessageId { get; set; }
         public virtual Message? ForwardedMessage { get; set; }
     }
+
 }

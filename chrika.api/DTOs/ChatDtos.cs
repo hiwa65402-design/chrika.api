@@ -44,5 +44,7 @@ namespace Chrika.Api.DTOs
         // جۆری نامەکە لە clientـەوە دیاری دەکرێت
         [Required]
         public MessageType Type { get; set; }
+        public bool IsDeleted { get; set; }
+        public string? ForwardedFromUsername { get; set; } // ناوی کەسە بنەڕەتییەکە
     }
 }
