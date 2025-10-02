@@ -47,4 +47,13 @@ namespace Chrika.Api.DTOs
         public bool IsDeleted { get; set; }
         public string? ForwardedFromUsername { get; set; } // ناوی کەسە بنەڕەتییەکە
     }
+    public class GroupConversationListItemDto
+    {
+        public int GroupId { get; set; }
+        public string? GroupName { get; set; }
+        public string? GroupProfilePicture { get; set; }
+        public string? LastMessage { get; set; }
+        public DateTime LastMessageAt { get; set; }
+        public int UnreadCount { get; set; }
+    }
 }

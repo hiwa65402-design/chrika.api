@@ -10,11 +10,11 @@ namespace Chrika.Api.Models
 
         [Required]
         [StringLength(100)]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Required]
         [StringLength(50)]
-        public string Username { get; set; } // ناوی بەکارهێنەری تاک
+        public string? Username { get; set; } // ناوی بەکارهێنەری تاک
 
         [StringLength(250)]
         public string? Description { get; set; }
@@ -30,11 +30,13 @@ namespace Chrika.Api.Models
 
         // پەیوەندییەکان
         public int OwnerId { get; set; }
-        public virtual User Owner { get; set; }
+        public virtual User? Owner { get; set; }
 
         public virtual ICollection<GroupMember> Members { get; set; } = new List<GroupMember>();
         public virtual ICollection<GroupFollower> Followers { get; set; } = new List<GroupFollower>();
         public virtual ICollection<GroupPost> Posts { get; set; } = new List<GroupPost>();
         public virtual ICollection<GroupJoinRequest> JoinRequests { get; set; } = new List<GroupJoinRequest>();
+        public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
+
     }
 }

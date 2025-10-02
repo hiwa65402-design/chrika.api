@@ -80,7 +80,28 @@ namespace Chrika.Api.Hubs
             // ئاگادارکردنەوەی لایەنی بەرامبەر کە پەیوەندییەکە کۆتایی هات
             await Clients.User(receiverId).SendAsync("ReceiveCallEnded", new { senderId });
         }
+   
+        /// <param name="groupId">IDی ئەو گروپەی کە joinـی دەکات</param>
+        public async Task JoinGroup(string groupId)
+        {
+            // زیادکردنی connectionـی ئێستای بەکارهێنەر بۆ گروپی SignalR
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
 
+            // (ئارەزوومەندانە) دەتوانیت پەیامێک بنێریت بۆ ئەوەی نیشانی بدەیت کەسێک هاتۆتە ژوورەوە
+            // var username = Context.User.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
+            // await Clients.Group(groupId).SendAsync("UserJoined", new { groupId, username });
+        }
+      
+        /// <param name="groupId">IDی ئەو گروپەی کە leaveـی دەکات</param>
+        public async Task LeaveGroup(string groupId)
+        {
+            // لابردنی connectionـی ئێستای بەکارهێنەر لە گروپی SignalR
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+
+            // (ئارەزوومەندانە) دەتوانیت پەیامێک بنێریت بۆ ئەوەی نیشانی بدەیت کەسێک ڕۆیشت
+            // var username = Context.User.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
+            // await Clients.Group(groupId).SendAsync("UserLeft", new { groupId, username });
+        }
     }
 
 }

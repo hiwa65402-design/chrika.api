@@ -49,11 +49,15 @@ namespace Chrika.Api.Models
         public bool IsDeleted { get; set; } = false; // بۆ سڕینەوەی نامە
 
         // --- پەیوەندییەکان ---
-        public int ConversationId { get; set; }
+        public int? ConversationId { get; set; }
         public virtual Conversation? Conversation { get; set; }
 
         public int SenderId { get; set; }
         public virtual User? Sender { get; set; }
+        // بۆ گروپ چات (نوێ زیادکراوە)
+        public int? GroupId { get; set; }
+        public virtual Group? Group { get; set; }
+        // ============================
 
         // بۆ نامەی جۆری Forwarded
 

@@ -40,6 +40,9 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IGroupPostService, GroupPostService>();
 builder.Services.AddScoped<IVideoService, VideoService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IGroupChatService, GroupChatService>();
+builder.Services.AddScoped<IGroupManagementService, GroupManagementService>();
+
 builder.Services.AddControllers();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
