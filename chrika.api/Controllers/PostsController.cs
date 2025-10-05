@@ -49,14 +49,32 @@ namespace Chrika.Api.Controllers
 
         // POST: api/posts
         // پۆستێکی نوێ دروست دەکات
+        // Controllers/PostsController.cs
+
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<PostDto>> CreatePost(CreatePostDto createPostDto)
+        public async Task<ActionResult<PostDto>> CreatePost([FromBody] CreatePostDto createPostDto)
         {
-            var userId = User.GetUserId();
-            var createdPost = await _postService.CreatePostAsync(createPostDto, userId);
-            return CreatedAtAction(nameof(GetPost), new { id = createdPost.Id }, createdPost);
+            try
+            {
+                // **** چارەسەرەکە لێرەدایە ****
+                // پشکنینێکی سادە: ئەگەر هیچ تێکست و هیچ وێنەیەک نەبوو، داواکارییەکە ڕەتبکەرەوە
+                if (string.IsNullOrWhiteSpace(createPostDto.Content) && string.IsNullOrEmpty(createPostDto.ImageUrl))
+                {
+                    return BadRequest("Post cannot be empty. It must have content or an image.");
+                }
+
+                var userId = User.GetUserId();
+                var createdPostDto = await _postService.CreatePostAsync(createPostDto, userId);
+
+                return StatusCode(201, createdPostDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
+
 
         // PUT: api/posts/5
         // پۆستێک نوێ دەکاتەوە
