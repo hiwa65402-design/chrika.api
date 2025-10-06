@@ -1,8 +1,6 @@
-﻿// Services/FileService.cs
+﻿// Services/FileService.cs (وەشانی Railway)
 using Chrika.Api.Models;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -10,11 +8,11 @@ namespace Chrika.Api.Services
 {
     public class FileService : IFileService
     {
-        private readonly IWebHostEnvironment _webHostEnvironment;
-
-        public FileService(IWebHostEnvironment webHostEnvironment)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        // === گۆڕانکاری: IWebHostEnvironmentـمان لابرد ===
+        public FileService(IHttpContextAccessor httpContextAccessor)
         {
-            _webHostEnvironment = webHostEnvironment;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<string> SaveFileAsync(IFormFile file, FileType fileType)
@@ -24,8 +22,11 @@ namespace Chrika.Api.Services
                 throw new ArgumentException("File is empty or null.");
             }
 
+            // === گۆڕانکاری: ڕاستەوخۆ لە ڕەگی پڕۆژەکە فۆڵدەر دروست دەکەین ===
+            var baseFolder = "Uploads"; // ناوی فۆڵدەرە سەرەکییەکە
             string subfolder = GetSubfolderForFileType(fileType);
-            var targetFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", subfolder);
+            var targetFolder = Path.Combine(Directory.GetCurrentDirectory(), baseFolder, subfolder);
+            // ==========================================================
 
             if (!Directory.Exists(targetFolder))
             {
@@ -40,9 +41,9 @@ namespace Chrika.Api.Services
                 await file.CopyToAsync(fileStream);
             }
 
-            // === گرنگترین بەش ===
-            // URLـێکی ڕێژەیی دروست دەکەین کە هەمیشە کاردەکات
-            var fileUrl = $"/uploads/{subfolder}/{uniqueFileName}";
+            // === گۆڕانکاری: URLـەکە بە شێوەی relative دروست دەکەین ===
+            var fileUrl = $"/{baseFolder}/{subfolder}/{uniqueFileName}".Replace("\\", "/");
+            // =====================================================
 
             return fileUrl;
         }
