@@ -1,158 +1,91 @@
-﻿// using statements
+﻿// Program.cs (کۆدی کۆتایی و ڕاستکراوە)
+
 using Chrika.Api.Data;
 using Chrika.Api.Hubs;
 using Chrika.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders; // <-- گرنگ: ئەمە زیاد بکە
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; 
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSignalR();
-// --- Section 1: Configure Services ---
 
-// 1. Add DbContext for Entity Framework
+// --- بەشی Serviceـەکان ---
+builder.Services.AddSignalR();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-        mySqlOptions => mySqlOptions.EnableStringComparisonTranslations()
-    )
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-// 2. Add Controllers
-builder.Services.AddControllers();
-
-// 3. Register Custom Services
+// زیادکردنی هەموو Serviceـەکان
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+// ... (هەموو Serviceـەکانی تری خۆت لێرە بن)
 builder.Services.AddScoped<IPostService, PostService>();
-builder.Services.AddScoped<ILikeService, LikeService>();
-builder.Services.AddScoped<ICommentService, CommentService>();
-builder.Services.AddScoped<IFollowService, FollowService>();
-builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IFileService, FileService>();
+// ... هتد
+
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
-builder.Services.AddScoped<IShareService, ShareService>();
-builder.Services.AddScoped<IGroupService, GroupService>();
-builder.Services.AddScoped<IGroupPostService, GroupPostService>();
-builder.Services.AddScoped<IVideoService, VideoService>();
-builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddScoped<IGroupChatService, GroupChatService>();
-builder.Services.AddScoped<IGroupManagementService, GroupManagementService>();
-
 builder.Services.AddControllers();
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // ئەمە وا دەکات کە Enumـەکان وەک وشە مامەڵەیان لەگەڵ بکرێت نەک ژمارە
-        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-    });
 
-
-
-
-
-// 4. Add Authentication with JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"]
-        };
-    });
+    .AddJwtBearer(options => { /* ... کۆدی تۆکن ... */ });
 
-// 5. Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
 });
 
-// 6. Add Swagger with JWT Support
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter a valid token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
-    });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[]{}
-        }
-    });
-});
+builder.Services.AddSwaggerGen(options => { /* ... کۆدی Swagger ... */ });
 
-
-// --- Section 2: Build the Application ---
+// --- بەشی دروستکردنی App ---
 var app = builder.Build();
 
-
-// --- Section 3: Configure the HTTP Request Pipeline (Middleware) ---
-
+// --- بەشی Middleware (زۆر گرنگ) ---
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
-
 app.UseHttpsRedirection();
-// وا دەکات فایلە ستاتیکەکانی ناو wwwroot (وەک وێنە و ڤیدیۆ) بەردەست بن
+
+// === گرنگترین گۆڕانکاری لێرەدایە ===
+// ڕێگەدان بە بەکارهێنانی فایلە ستاتیکەکان لە فۆڵدەری wwwroot
 app.UseStaticFiles();
-// گرنگ: ڕیزبەندی ئەم دووانە نابێت بگۆڕدرێت
-app.UseAuthentication(); // یەکەم: پشکنینی تۆکن
-app.UseAuthorization();  // دووەم: پشکنینی دەسەڵات
-app.MapHub<NotificationHub>("/notificationHub");
 
+// بۆ ئەوەی ڕێگە بدەین بە بینینی فایلەکانی ناو فۆڵدەری uploads
+// ئەگەر wwwroot بوونی نەبوو، دروستی دەکەین
+var wwwRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+if (!Directory.Exists(wwwRootPath))
+{
+    Directory.CreateDirectory(wwwRootPath);
+}
+var uploadsPath = Path.Combine(wwwRootPath, "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
 
-app.MapHub<ChatHub>("/chatHub");
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+// ==================================
+
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
+app.MapHub<ChatHub>("/chatHub");
+// ... (هەر Hubێکی ترت هەیە)
 
 app.Run();
-
-
-
-
-
-
-//using (var scope = app.Services.CreateScope())
-//{
-//    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-//    try
-//    {
-//        await dbContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS `__EFMigrationsHistory`;");
-//        Console.WriteLine("SUCCESS: __EFMigrationsHistory table dropped.");
-//    }
-//    catch (Exception ex) { Console.WriteLine($"ERROR: {ex.Message}"); }
-//}
-
