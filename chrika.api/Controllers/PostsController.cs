@@ -123,7 +123,9 @@ namespace Chrika.Api.Controllers
         public async Task<ActionResult<IEnumerable<PostDto>>> GetTimelinePosts()
         {
             var userId = User.GetUserId();
-            var posts = await _postService.GetTimelinePostsAsync(userId);
+            var posts = await _postService.GetAllPostsAsync(null);
+
+          //  var posts = await _postService.GetTimelinePostsAsync(userId);
             return Ok(posts);
         }
 
