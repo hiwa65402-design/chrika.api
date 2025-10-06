@@ -14,5 +14,7 @@ namespace Chrika.Api.Services
         Task<PostDto> CreatePostAsync(CreatePostDto createPostDto, int userId);
         Task<PostDto?> UpdatePostAsync(int postId, UpdatePostDto updatePostDto, int userId);
         Task<bool> DeletePostAsync(int postId, int userId);
+        Task<IEnumerable<PostDto>> GetTimelinePostsAsync(int userId);
+
     }
 }

@@ -116,5 +116,17 @@ namespace Chrika.Api.Controllers
             await _shareService.RecordShareAsync(postId, userId);
             return Ok("Post shared successfully.");
         }
+      
+        // GET: api/posts/timeline
+        [HttpGet("timeline")]
+        [Authorize] // ئەمە پێویستی بە token هەیە
+        public async Task<ActionResult<IEnumerable<PostDto>>> GetTimelinePosts()
+        {
+            var userId = User.GetUserId();
+            var posts = await _postService.GetTimelinePostsAsync(userId);
+            return Ok(posts);
+        }
+
     }
+
 }

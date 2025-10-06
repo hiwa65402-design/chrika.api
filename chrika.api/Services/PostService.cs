@@ -234,5 +234,50 @@ namespace Chrika.Api.Services
             await _context.SaveChangesAsync();
             return true;
         }
+        
+        public async Task<IEnumerable<PostDto>> GetTimelinePostsAsync(int userId)
+        {
+            // ١. لیستی IDی ئەو کەسانەی کە من فۆڵۆوم کردوون
+            var followingIds = await _context.Follows
+                .Where(f => f.FollowerId == userId)
+                .Select(f => f.FollowingId)
+                .ToListAsync();
+
+            // ٢. IDی خۆشم زیاد دەکەم بۆ ئەوەی پۆستی خۆشم ببینم
+            followingIds.Add(userId);
+
+            // ٣. پۆستی ئەو کەسانە دەهێنین کە لەو لیستەیەدان
+            var posts = await _context.Posts
+                .Where(p => followingIds.Contains(p.UserId))
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => MapToPostDto(p, userId)) // فانکشنە یاریدەدەرەکەی خۆمان بەکاردەهێنین
+                .ToListAsync();
+
+            return posts;
+        }
+        private PostDto MapToPostDto(Post post, int? currentUserId)
+        {
+            if (post == null)
+            {
+                return null;
+            }
+
+            return new PostDto
+            {
+                Id = post.Id,
+                Content = post.Content,
+                ImageUrl = post.ImageUrl,
+                CreatedAt = post.CreatedAt,
+                UserId = post.UserId,
+                Username = post.User?.Username,
+                UserProfilePicture = post.User?.ProfilePicture,
+                LikesCount = post.Likes.Count,
+                CommentsCount = post.Comments.Count,
+                // پشکنینی ئەوەی کە ئایا بەکارهێنەری ئێستا لایکی ئەم پۆستەی کردووە
+                IsLikedByCurrentUser = currentUserId.HasValue && post.Likes.Any(l => l.UserId == currentUserId.Value)
+            };
+        }
     }
 }
