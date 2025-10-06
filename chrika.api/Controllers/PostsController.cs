@@ -122,7 +122,7 @@ namespace Chrika.Api.Controllers
       //  [Authorize] // ئەمە پێویستی بە token هەیە
         public async Task<ActionResult<IEnumerable<PostDto>>> GetTimelinePosts()
         {
-            var userId = User.GetUserId();
+           // var userId = User.GetUserId();
             var posts = await _postService.GetAllPostsAsync(null);
 
           //  var posts = await _postService.GetTimelinePostsAsync(userId);
