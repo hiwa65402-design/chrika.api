@@ -1,4 +1,4 @@
-﻿// Services/FileService.cs (وەشانی Railway)
+﻿// Services/FileService.cs (وەشانی گەرەنتی)
 using Chrika.Api.Models;
 using Microsoft.AspNetCore.Http;
 using System.IO;
@@ -8,12 +8,8 @@ namespace Chrika.Api.Services
 {
     public class FileService : IFileService
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        // === گۆڕانکاری: IWebHostEnvironmentـمان لابرد ===
-        public FileService(IHttpContextAccessor httpContextAccessor)
-        {
-            _httpContextAccessor = httpContextAccessor;
-        }
+        // === گۆڕانکاری: هیچ شتێکمان پێویست نییە لێرە ===
+        public FileService() { }
 
         public async Task<string> SaveFileAsync(IFormFile file, FileType fileType)
         {
@@ -25,6 +21,7 @@ namespace Chrika.Api.Services
             // === گۆڕانکاری: ڕاستەوخۆ لە ڕەگی پڕۆژەکە فۆڵدەر دروست دەکەین ===
             var baseFolder = "Uploads"; // ناوی فۆڵدەرە سەرەکییەکە
             string subfolder = GetSubfolderForFileType(fileType);
+            // Path.Combine دڵنیادەبێتەوە کە / و \ بە دروستی بەکاردێن
             var targetFolder = Path.Combine(Directory.GetCurrentDirectory(), baseFolder, subfolder);
             // ==========================================================
 
@@ -42,6 +39,7 @@ namespace Chrika.Api.Services
             }
 
             // === گۆڕانکاری: URLـەکە بە شێوەی relative دروست دەکەین ===
+            // دڵنیادەبینەوە کە هەمیشە forward slash بەکاردێت
             var fileUrl = $"/{baseFolder}/{subfolder}/{uniqueFileName}".Replace("\\", "/");
             // =====================================================
 

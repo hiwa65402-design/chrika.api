@@ -119,6 +119,9 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 // ڕێگەدان بە خوێندنەوەی فایلەکان لە فۆڵدەری Uploads
+
+// === گۆڕانکاری سەرەکی لێرەدایە ===
+// ڕێگەدان بە خوێندنەوەی فایلەکان لە فۆڵدەری Uploads
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
 if (!Directory.Exists(uploadsPath))
 {
@@ -127,8 +130,9 @@ if (!Directory.Exists(uploadsPath))
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
-    RequestPath = "/Uploads"
+    RequestPath = "/Uploads" // هەر داواکارییەک بە /Uploads دەستی پێکرد، بڕۆ سەیری ئەم فۆڵدەرە بکە
 });
+
 
 app.UseAuthentication();
 app.UseAuthorization();
