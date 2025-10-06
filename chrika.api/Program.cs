@@ -122,16 +122,23 @@ app.UseCors("AllowAll");
 
 // === گۆڕانکاری سەرەکی لێرەدایە ===
 // ڕێگەدان بە خوێندنەوەی فایلەکان لە فۆڵدەری Uploads
-var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
-if (!Directory.Exists(uploadsPath))
-{
-    Directory.CreateDirectory(uploadsPath);
-}
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(uploadsPath),
-    RequestPath = "/Uploads" // هەر داواکارییەک بە /Uploads دەستی پێکرد، بڕۆ سەیری ئەم فۆڵدەرە بکە
-});
+//var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+//if (!Directory.Exists(uploadsPath))
+//{
+//    Directory.CreateDirectory(uploadsPath);
+//}
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(uploadsPath),
+//    RequestPath = "/Uploads" // هەر داواکارییەک بە /Uploads دەستی پێکرد، بڕۆ سەیری ئەم فۆڵدەرە بکە
+//});
+app.UseHttpsRedirection();
+app.UseCors("AllowAll");
+
+// ئەم دێڕە هەموو فایلەکانی ناو wwwroot چالاک دەکات
+app.UseStaticFiles();
+
+app.UseAuthentication();
 
 
 app.UseAuthentication();
