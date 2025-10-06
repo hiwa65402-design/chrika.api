@@ -20,6 +20,8 @@ namespace Chrika.Api.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        // Services/FileService.cs
+
         public async Task<string> SaveFileAsync(IFormFile file, FileType fileType)
         {
             if (file == null || file.Length == 0)
@@ -27,6 +29,7 @@ namespace Chrika.Api.Services
                 throw new ArgumentException("File is empty or null.");
             }
 
+            // ١. دیاریکردنی فۆڵدەری ئامانج
             string subfolder = GetSubfolderForFileType(fileType);
             var targetFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", subfolder);
 
@@ -35,33 +38,19 @@ namespace Chrika.Api.Services
                 Directory.CreateDirectory(targetFolder);
             }
 
-            // ✅✅✅ گۆڕانکاری: ناوێکی جوانتر و مانادارتر بۆ فایلەکە دروست دەکەین ✅✅✅
-            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            var randomPart = Guid.NewGuid().ToString().Substring(0, 8);
-            var uniqueFileName = $"{timestamp}_{randomPart}{Path.GetExtension(file.FileName)}";
-
+            // ٢. ناوێکی بێهاوتا بۆ فایلەکە دروست بکە
+            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var filePath = Path.Combine(targetFolder, uniqueFileName);
 
+            // ٣. فایلەکە خەزن بکە
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
             }
 
-            // ✅✅✅ هەنگاوی دووەم: ناونیشانی گشتی (URL) بە شێوازی زیرەکانە دروست بکە ✅✅✅
-            var request = _httpContextAccessor.HttpContext.Request;
-            string host;
-
-#if DEBUG
-            // لە دۆخی دیبەگدا، IPی کۆمپیوتەرەکە بەکاربهێنە
-            var ipAddress = UrlHelper.GetLocalIpAddress();
-            var port = request.Host.Port;
-            host = $"{ipAddress}:{port}";
-#else
-                // لە دۆخی Releaseدا، ناونیشانی سەرەکی بەکاربهێنە
-                host = request.Host.ToString();
-#endif
-
-            var fileUrl = $"{request.Scheme}://{host}/uploads/{subfolder}/{uniqueFileName}";
+            // ٤. ناونیشانی گشتی (URL) بە سادەترین شێوە دروست بکە
+            //    ئەمە URLـێکی ڕێژەیی (relative) دروست دەکات کە هەمیشە کاردەکات
+            var fileUrl = $"/uploads/{subfolder}/{uniqueFileName}";
 
             return fileUrl;
         }
