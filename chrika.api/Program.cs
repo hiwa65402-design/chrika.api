@@ -17,8 +17,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
+        // === گرنگترین گۆڕانکاری لێرەدایە ===
+        mySqlOptions => mySqlOptions.EnableStringComparisonTranslations()
+        // ==================================
+    )
 );
+
 
 // زیادکردنی هەموو Serviceـەکان
 builder.Services.AddScoped<IUserService, UserService>();

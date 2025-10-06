@@ -18,23 +18,24 @@ namespace Chrika.Api.Services
             _tokenService = tokenService;
         }
 
-        // === گۆڕانکاری سەرەکی لێرەدایە ===
+      
         public async Task<LoginResponseDto?> AuthenticateUserAsync(LoginDto loginDto)
         {
+            // === گۆڕانکاری بۆ شێوازێکی ستانداردتر ===
+            var normalizedInput = loginDto.UsernameOrEmail.ToLower();
+
             var user = await _context.Users.FirstOrDefaultAsync(u =>
-                (u.Username.Equals(loginDto.UsernameOrEmail, StringComparison.OrdinalIgnoreCase) ||
-                 u.Email.Equals(loginDto.UsernameOrEmail, StringComparison.OrdinalIgnoreCase)) &&
+                (u.Username.ToLower() == normalizedInput || u.Email.ToLower() == normalizedInput) &&
                 u.IsActive);
+            // =======================================
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
                 return null; // Authentication failed
             }
 
-            // دروستکردنی تۆکن بە بەکارهێنانی TokenService
             var token = _tokenService.CreateToken(user);
 
-            // گەڕاندنەوەی وەڵامێک کە تۆکنەکەی تێدایە
             return new LoginResponseDto
             {
                 Username = user.Username,
