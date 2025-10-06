@@ -164,46 +164,28 @@ namespace Chrika.Api.Services
         // === فانکشنە کۆنەکان کە هێشتا پێویستن بۆ کارکردنی PostsController ===
         // =================================================================
 
-        public async Task<IEnumerable<PostDto>> GetAllPostsAsync(int? currentUserId = null)
+        public async Task<IEnumerable<PostDto>> GetAllPostsAsync(int? userId)
         {
-            return await _context.Posts.AsNoTracking().OrderByDescending(p => p.CreatedAt)
-                .Select(p => new PostDto
-                {
-                    Id = p.Id,
-                    Content = p.Content,
-                    ImageUrl = p.ImageUrl,
-                    CreatedAt = p.CreatedAt,
-                    UserId = p.UserId,
-                    Username = p.User.Username,
-                    UserProfilePicture = p.User.ProfilePicture,
-                    LikesCount = p.Likes.Count,
-                    CommentsCount = p.Comments.Count,
-                    SharesCount = _context.Shares.Count(s => s.PostId == p.Id),
-                    IsLikedByCurrentUser = currentUserId.HasValue && p.Likes.Any(l => l.UserId == currentUserId.Value),
-                    IsSharedByCurrentUser = currentUserId.HasValue && _context.Shares.Any(s => s.PostId == p.Id && s.UserId == currentUserId.Value)
-                }).ToListAsync();
+            return await _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .Include(p => p.Comments)
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => MapToPostDto(p, userId)) // بەکارهێنانی فانکشنە یاریدەدەرەکە
+                .ToListAsync();
         }
 
-        public async Task<PostDto?> GetPostByIdAsync(int id, int? currentUserId = null)
+        public async Task<PostDto> GetPostByIdAsync(int id, int? userId)
         {
-            return await _context.Posts.AsNoTracking().Where(p => p.Id == id)
-                .Select(p => new PostDto
-                {
-                    Id = p.Id,
-                    Content = p.Content,
-                    ImageUrl = p.ImageUrl,
-                    CreatedAt = p.CreatedAt,
-                    UserId = p.UserId,
-                    Username = p.User.Username,
-                    UserProfilePicture = p.User.ProfilePicture,
-                    LikesCount = p.Likes.Count,
-                    CommentsCount = p.Comments.Count,
-                    SharesCount = _context.Shares.Count(s => s.PostId == p.Id),
-                    IsLikedByCurrentUser = currentUserId.HasValue && p.Likes.Any(l => l.UserId == currentUserId.Value),
-                    IsSharedByCurrentUser = currentUserId.HasValue && _context.Shares.Any(s => s.PostId == p.Id && s.UserId == currentUserId.Value)
-                }).FirstOrDefaultAsync();
-        }
+            var post = await _context.Posts
+                .Where(p => p.Id == id)
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .Include(p => p.Comments)
+                .FirstOrDefaultAsync();
 
+            return MapToPostDto(post, userId); // بەکارهێنانی فانکشنە یاریدەدەرەکە
+        }
         public async Task<PostDto> CreatePostAsync(CreatePostDto createPostDto, int userId)
         {
             var post = new Post
