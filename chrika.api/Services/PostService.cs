@@ -241,7 +241,7 @@ namespace Chrika.Api.Services
         }
         // Services/PostService.cs
 
-        private PostDto MapToPostDto(Post post, int? currentUserId)
+        private static PostDto MapToPostDto(Post post, int? currentUserId)
         {
             if (post == null)
             {
