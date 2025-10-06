@@ -239,6 +239,8 @@ namespace Chrika.Api.Services
 
             return posts;
         }
+        // Services/PostService.cs
+
         private PostDto MapToPostDto(Post post, int? currentUserId)
         {
             if (post == null)
@@ -253,12 +255,13 @@ namespace Chrika.Api.Services
                 ImageUrl = post.ImageUrl,
                 CreatedAt = post.CreatedAt,
                 UserId = post.UserId,
-                Username = post.User?.Username,
-                UserProfilePicture = post.User?.ProfilePicture,
-                LikesCount = post.Likes.Count,
-                CommentsCount = post.Comments.Count,
-                // پشکنینی ئەوەی کە ئایا بەکارهێنەری ئێستا لایکی ئەم پۆستەی کردووە
-                IsLikedByCurrentUser = currentUserId.HasValue && post.Likes.Any(l => l.UserId == currentUserId.Value)
+                // === گۆڕانکارییەکە لێرەدایە (پشکنینی null زیادکراوە) ===
+                Username = post.User?.Username, // ئەگەر User بوونی نەبوو، null دەگەڕێنێتەوە
+                UserProfilePicture = post.User?.ProfilePicture, // ئەگەر User بوونی نەبوو، null دەگەڕێنێتەوە
+                                                                // =======================================================
+                LikesCount = post.Likes?.Count ?? 0, // ئەگەر Likes بوونی نەبوو، 0 دادەنێت
+                CommentsCount = post.Comments?.Count ?? 0, // ئەگەر Comments بوونی نەبوو، 0 دادەنێت
+                IsLikedByCurrentUser = currentUserId.HasValue && (post.Likes?.Any(l => l.UserId == currentUserId.Value) ?? false)
             };
         }
     }
