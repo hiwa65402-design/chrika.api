@@ -105,47 +105,36 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// --- بەشی دروستکردنی App ---
+// --- بەشی Middleware (وەشانی پاککراو و ڕاست) ---
 var app = builder.Build();
 
-// --- بەشی Middleware ---
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// 1. HTTPS Redirection
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
 
-// ڕێگەدان بە خوێندنەوەی فایلەکان لە فۆڵدەری Uploads
-
-// === گۆڕانکاری سەرەکی لێرەدایە ===
-// ڕێگەدان بە خوێندنەوەی فایلەکان لە فۆڵدەری Uploads
-//var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
-//if (!Directory.Exists(uploadsPath))
-//{
-//    Directory.CreateDirectory(uploadsPath);
-//}
-//app.UseStaticFiles(new StaticFileOptions
-//{
-//    FileProvider = new PhysicalFileProvider(uploadsPath),
-//    RequestPath = "/Uploads" // هەر داواکارییەک بە /Uploads دەستی پێکرد، بڕۆ سەیری ئەم فۆڵدەرە بکە
-//});
-app.UseHttpsRedirection();
-app.UseCors("AllowAll");
-
-// ئەم دێڕە هەموو فایلەکانی ناو wwwroot چالاک دەکات
+// 2. Static Files - زۆر گرنگە لێرە بێت
+// ئەمە ڕێگە دەدات وێنە و فایلەکان لە wwwroot بخوێنرێنەوە پێش هەر شتێکی تر
 app.UseStaticFiles();
 
+// 3. CORS Policy
+app.UseCors("AllowAll");
+
+// 4. Authentication - ناسنامە
 app.UseAuthentication();
 
-
-app.UseAuthentication();
+// 5. Authorization - دەسەڵات
 app.UseAuthorization();
 
+// 6. Map Controllers and Hubs
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<NotificationHub>("/notificationHub");
 
+// 7. Run the application
 app.Run();
