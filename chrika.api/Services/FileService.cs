@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Chrika.Api.Helpers; // ✅✅✅ هەنگاوی یەکەم: ئەمە زیاد بکە ✅✅✅
 
 namespace Chrika.Api.Services
 {
@@ -19,7 +20,6 @@ namespace Chrika.Api.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        // === فانکشنە نوێ و گشتگیرەکە ===
         public async Task<string> SaveFileAsync(IFormFile file, FileType fileType)
         {
             if (file == null || file.Length == 0)
@@ -27,7 +27,6 @@ namespace Chrika.Api.Services
                 throw new ArgumentException("File is empty or null.");
             }
 
-            // 1. دیاریکردنی فۆڵدەری ئامانج بەپێی جۆری فایل
             string subfolder = GetSubfolderForFileType(fileType);
             var targetFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", subfolder);
 
@@ -36,25 +35,37 @@ namespace Chrika.Api.Services
                 Directory.CreateDirectory(targetFolder);
             }
 
-            // 2. ناوێکی بێهاوتا بۆ فایلەکە دروست بکە
-            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            // ✅✅✅ گۆڕانکاری: ناوێکی جوانتر و مانادارتر بۆ فایلەکە دروست دەکەین ✅✅✅
+            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            var randomPart = Guid.NewGuid().ToString().Substring(0, 8);
+            var uniqueFileName = $"{timestamp}_{randomPart}{Path.GetExtension(file.FileName)}";
+
             var filePath = Path.Combine(targetFolder, uniqueFileName);
 
-            // 3. فایلەکە خەزن بکە
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
             }
 
-            // 4. ناونیشانی گشتی (URL)ـی فایلەکە دروست بکە
+            // ✅✅✅ هەنگاوی دووەم: ناونیشانی گشتی (URL) بە شێوازی زیرەکانە دروست بکە ✅✅✅
             var request = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var fileUrl = $"{baseUrl}/uploads/{subfolder}/{uniqueFileName}";
+            string host;
+
+#if DEBUG
+            // لە دۆخی دیبەگدا، IPی کۆمپیوتەرەکە بەکاربهێنە
+            var ipAddress = UrlHelper.GetLocalIpAddress();
+            var port = request.Host.Port;
+            host = $"{ipAddress}:{port}";
+#else
+                // لە دۆخی Releaseدا، ناونیشانی سەرەکی بەکاربهێنە
+                host = request.Host.ToString();
+#endif
+
+            var fileUrl = $"{request.Scheme}://{host}/uploads/{subfolder}/{uniqueFileName}";
 
             return fileUrl;
         }
 
-        // فانکشنێکی یاریدەدەر بۆ وەرگرتنی ناوی فۆڵدەر
         private string GetSubfolderForFileType(FileType fileType)
         {
             return fileType switch
@@ -65,7 +76,7 @@ namespace Chrika.Api.Services
                 FileType.ChatImage => "chat/images",
                 FileType.ChatVideo => "chat/videos",
                 FileType.ChatAudio => "chat/audios",
-                _ => "general" // بۆ هەر حاڵەتێکی تر
+                _ => "general"
             };
         }
     }
